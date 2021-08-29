@@ -21,7 +21,7 @@ class Index extends Component {
 
   state = {
     loading: false,
-    hideMoney: window.localStorage.getItem("hideMoney") || false,
+    hideMoney: JSON.parse(window.localStorage.getItem("hideMoney") || 'false'),
     Income: 0,
     Expenses: 0,
     Liabilities: 0,
@@ -149,7 +149,7 @@ class Index extends Component {
                       renderItem={item => (
                         <List.Item
                           actions={[
-                            item.amount ? <div>{AccountAmount(item.account, item.amount)}</div> : ''
+                            item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol)}</div> : ''
                           ]}
                         >
                           <List.Item.Meta
@@ -165,7 +165,7 @@ class Index extends Component {
               </Spin>
           }
         </div>
-        <AddTransactionDrawer onClose={this.handleCloseDrawer} onSubmit={this.handleAddTransaction} visible={addTransactionDrawerVisible} />
+        <AddTransactionDrawer {...this.props} onClose={this.handleCloseDrawer} onSubmit={this.handleAddTransaction} visible={addTransactionDrawerVisible} />
       </div>
     );
   }

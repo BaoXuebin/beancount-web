@@ -1,8 +1,8 @@
-import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Drawer, Form, Input, message, Select, Space, Tag } from 'antd';
+import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { fetch } from '../config/Util';
 
 const { Option } = Select;
@@ -83,13 +83,27 @@ class AddTransactionDrawer extends Component {
       })
   }
 
-  handleChangeAmount = () => {
-    const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
-    let balanceAmount = Decimal(0)
-    formEntriesValues.entries.filter(a => a && a.amount).forEach(entryValue => {
-      balanceAmount = balanceAmount.sub(Decimal(entryValue.amount))
-    })
-    this.setState({ balanceAmount: balanceAmount.toString() })
+  handleChangeAmount = (balanceAmount) => {
+    this.setState({ balanceAmount })
+  }
+
+  handleChangeAccount = (account, idx) => {
+    const entries = this.formRef.current.getFieldsValue().entries;
+    const accountCommodity = this.getAccountCommodity(account)
+    // 账户货币单位不同，需要指定汇率
+    entries[idx].commodity = accountCommodity
+    if (accountCommodity !== this.props.commodity.val) {
+      entries[idx].priceCommodity = this.props.commodity.val
+    }
+    this.formRef.current.setFieldsValue({ entries })
+  }
+
+  getAccountCommodity = (account) => {
+    const arr = this.state.accounts.filter(acc => acc.account === account)[0]
+    if (arr) {
+      return arr.commodity
+    }
+    return ''
   }
 
   handleSubmit = (values) => {
@@ -99,7 +113,6 @@ class AddTransactionDrawer extends Component {
         message.success('添加成功')
         this.formRef.current.resetFields()
         this.formRef.current.setFieldsValue({ date: dayjs().format('YYYY-MM-DD') })
-
         const { payees } = this.state
         if (values.payee) {
           const newPayees = Array.from(new Set([...payees, values.payee]))
@@ -133,7 +146,7 @@ class AddTransactionDrawer extends Component {
         title="记账"
         placement="bottom"
         closable={true}
-        height="600"
+        height="680"
         className="page-drawer"
         bodyStyle={{ display: 'flex', justifyContent: 'center' }}
         {
@@ -141,17 +154,15 @@ class AddTransactionDrawer extends Component {
         }
       >
         <Form className="page-form" size="large" ref={this.formRef} onFinish={this.handleSubmit} validateMessages={validateMessages}>
-          <Form.Item>
-            <div>
-              {
-                this.state.templates.map(t => (
-                  <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
-                    <Tag size="middle" color="#1DA57A" closable onClose={(e) => { this.handleDeleteTransactionTemplate(e, t.id) }}>{t.templateName || t.payee || t.id}</Tag>
-                  </a>
-                ))
-              }
-            </div>
-          </Form.Item>
+          <div>
+            {
+              this.state.templates.map(t => (
+                <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
+                  <Tag size="middle" color="#1DA57A" closable onClose={(e) => { this.handleDeleteTransactionTemplate(e, t.id) }}>{t.templateName || t.payee || t.id}</Tag>
+                </a>
+              ))
+            }
+          </div>
           <Form.Item name="date" initialValue={dayjs().format('YYYY-MM-DD')} rules={[{ required: true }]}>
             <Input type="date" placeholder="交易时间" />
           </Form.Item>
@@ -170,43 +181,93 @@ class AddTransactionDrawer extends Component {
           <Form.Item name="desc" rules={[{ required: true }]}>
             <Input placeholder="详细描述，记录细节" />
           </Form.Item>
-          <Form.Item label="账目明细">
+          <Divider plain>账户明细</Divider>
+          <Form.Item>
             <FormList form={this.formRef} name="entries">
               {(fields, { add, remove }) => {
                 return (
                   <div>
-                    {fields.map(field => (
-                      <Space key={field.key} style={{ display: 'flex', marginBottom: 8 }} align="start">
-                        <Form.Item
-                          name={[field.name, 'account']}
-                          fieldKey={[field.fieldKey, 'account']}
-                          rules={[{ required: true, message: '必输项' }]}
-                        >
-                          <Select
-                            showSearch
-                            style={{ width: 240 }}
-                            placeholder="选择账户"
-                            optionFilterProp="children"
+                    {fields.map(field => {
+                      let accountCommodity = null
+                      let selectAccount = this.formRef.current.getFieldsValue().entries[field.name];
+                      if (selectAccount) {
+                        accountCommodity = this.getAccountCommodity(selectAccount.account)
+                      }
+                      const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
+                      let balanceAmount = null
+                      formEntriesValues.entries.filter(a => a && a.amount).forEach(entryValue => {
+                        const { amount, commodity, price, priceCommodity } = entryValue
+                        if (priceCommodity && priceCommodity !== commodity && amount && price) {
+                          // 不同币种需要计算税率
+                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(amount).mul(Decimal(price)))
+                        } else if (amount) {
+                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(amount))
+                        }
+                      })
+                      return (
+                        <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
+                          <Form.Item
+                            name={[field.name, 'account']}
+                            fieldKey={[field.fieldKey, 'account']}
+                            rules={[{ required: true, message: '必输项' }]}
                           >
-                            {
-                              this.state.accounts.map(account => <Option value={account}>{account}</Option>)
-                            }
-                          </Select>
-                        </Form.Item>
-                        <Form.Item
-                          name={[field.name, 'amount']}
-                          fieldKey={[field.fieldKey, 'amount']}
-                          rules={[{ required: true, message: '必输项' }]}
-                        >
-                          <Input type="number" placeholder={this.state.balanceAmount || '金额'} onChange={this.handleChangeAmount} />
-                        </Form.Item>
-                        <MinusCircleOutlined
-                          onClick={() => {
-                            remove(field.name);
-                          }}
-                        />
-                      </Space>
-                    ))}
+                            <Select
+                              showSearch
+                              placeholder="选择账户"
+                              optionFilterProp="children"
+                              onChange={(acc) => { this.handleChangeAccount(acc, field.name) }}
+                              style={{ marginRight: '10px' }}
+                            >
+                              {
+                                this.state.accounts.map(account => <Option value={account.account}>{account.account}</Option>)
+                              }
+                            </Select>
+                          </Form.Item>
+                          {
+                            (accountCommodity && accountCommodity !== this.props.commodity.val) &&
+                            <Fragment>
+                              <Form.Item
+                                hidden
+                                name={[field.name, 'priceCommodity']}
+                                fieldKey={[field.fieldKey, 'priceCommodity']}
+                              >
+                                <Input />
+                              </Form.Item>
+                              <Form.Item
+                                name={[field.name, 'price']}
+                                fieldKey={[field.fieldKey, 'price']}
+                              >
+                                <Input type="number" addonBefore={`1${accountCommodity}≈`} addonAfter={this.props.commodity.val} placeholder={'汇率（选填）'} onChange={this.handleChangeAmount} />
+                              </Form.Item>
+                            </Fragment>
+                          }
+                          <Form.Item
+                            hidden
+                            name={[field.name, 'commodity']}
+                            fieldKey={[field.fieldKey, 'commodity']}
+                          >
+                            <Input />
+                          </Form.Item>
+                          <Form.Item
+                            name={[field.name, 'amount']}
+                            fieldKey={[field.fieldKey, 'amount']}
+                            rules={[{ required: true, message: '金额' }]}
+                          >
+                            <div style={{ display: 'flex' }}>
+                              <Input
+                                type="number"
+                                addonBefore={accountCommodity}
+                                placeholder={balanceAmount || "金额"}
+                                onChange={this.handleChangeAmount}
+                                style={{ flex: 1 }}
+                              />
+                              <CloseCircleOutlined style={{ width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={() => { remove(field.name); }} />
+                            </div>
+                          </Form.Item>
+                          <Divider />
+                        </div>
+                      )
+                    })}
                     <Form.Item>
                       <Button
                         type="dashed"
@@ -232,6 +293,7 @@ class AddTransactionDrawer extends Component {
               保存为模版
             </Button>
           </Form.Item>
+          <Form.Item></Form.Item>
         </Form>
       </Drawer>
     )

@@ -42,7 +42,8 @@ const AccountList = ({ loading, accounts, onEdit, onBalance }) => {
               renderItem={item => (
                 <List.Item
                   actions={[
-                    item.amount ? <div>{AccountAmount(item.account, item.amount)}</div> : '',
+                    item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol)}</div> : '',
+                    (item.amount && item.price && item.commodity !== item.priceCommodity) ? <div>{AccountAmount(item.account, Decimal(item.amount).mul(Decimal(item.price)), item.priceCommoditySymbol)}</div> : '',
                     item.loading ?
                       <LoadingOutlined /> :
                       <a key="list-delete" onClick={() => { onEdit(item.account) }}>编辑</a>,
@@ -52,7 +53,7 @@ const AccountList = ({ loading, accounts, onEdit, onBalance }) => {
                   <List.Item.Meta
                     avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
                     title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
-                    description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''}`}
+                    description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.commodity || ''}`}
                   />
                 </List.Item>
               )}
@@ -116,7 +117,7 @@ class Account extends Component {
 
   handleAddAccount = (values) => {
     this.setState({ loading: true })
-    const { account, date, accountType, accountTypeName } = values
+    const { account, date, accountType, accountTypeName, commodity } = values
     if (this.state.selectedAccountType === 'Undefined') {
       const type = `${this.state.selectedAccountTypePrefix}:${accountType}`
       fetch(`/api/auth/account/type?type=${type}&name=${accountTypeName}`, { method: 'POST' })
@@ -128,7 +129,7 @@ class Account extends Component {
         }).catch(console.error).finally(() => { this.setState({ loading: false }) })
     } else {
       const acc = `${this.state.selectedAccountType}:${account}`
-      fetch(`/api/auth/account?account=${acc}&date=${date}`, { method: 'POST' })
+      fetch(`/api/auth/account?account=${acc}&date=${date}&commodity=${commodity}`, { method: 'POST' })
         .then(result => {
           this.setState({ drawerVisible: false, accounts: [result, ...this.state.accounts] });
           // 清空表单内容
@@ -266,6 +267,19 @@ class Account extends Component {
             {
               selectedAccountType === 'Undefined' ?
                 <Form.Item
+                  name="accountTypeName"
+                  label="类型名称"
+                  rules={[{ required: true }]}
+                >
+                  <Input placeholder="账户类型的名称，用以账户分类，如购物" />
+                </Form.Item> :
+                <Form.Item name="date" label="日期" rules={[{ required: true }]}>
+                  <Input type="date" placeholder="时间" />
+                </Form.Item>
+            }
+            {
+              selectedAccountType === 'Undefined' ?
+                <Form.Item
                   name="accountType"
                   label="账户类型"
                   rules={[{ required: true }]}
@@ -296,17 +310,15 @@ class Account extends Component {
                 </Form.Item>
             }
             {
-              selectedAccountType === 'Undefined' ?
-                <Form.Item
-                  name="accountTypeName"
-                  label="类型名称"
-                  rules={[{ required: true }]}
-                >
-                  <Input placeholder="账户类型的名称，用以账户分类，如购物" />
-                </Form.Item> :
-                <Form.Item name="date" label="日期" rules={[{ required: true }]}>
-                  <Input type="date" placeholder="时间" />
-                </Form.Item>
+              selectedAccountType !== 'Undefined' &&
+              <Form.Item
+                name="commodity"
+                label="币种"
+                rules={[{ required: true }]}
+                initialValue={this.props.commodity.val}
+              >
+                <Input placeholder="账户使用的货币单位" />
+              </Form.Item>
             }
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} className="submit-button">
