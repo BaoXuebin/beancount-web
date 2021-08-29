@@ -1,0 +1,5 @@
+.index-page .top-wrapper {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+}
