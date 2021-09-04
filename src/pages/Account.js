@@ -1,4 +1,4 @@
-import { FormOutlined, LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { FallOutlined, FormOutlined, LoadingOutlined, PlusOutlined, RiseOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -17,7 +17,7 @@ const validateMessages = {
   required: '${label} 不能为空！'
 };
 
-const AccountList = ({ loading, accounts, onEdit, onBalance }) => {
+const AccountList = ({ loading, accounts, onEdit }) => {
   const groupByAccountsDict = {}
   accounts.forEach(acc => {
     const typeKey = acc.type.key;
@@ -46,8 +46,7 @@ const AccountList = ({ loading, accounts, onEdit, onBalance }) => {
                     (item.amount && item.price && item.commodity !== item.priceCommodity) ? <div>{AccountAmount(item.account, Decimal(item.amount).mul(Decimal(item.price)), item.priceCommoditySymbol)}</div> : '',
                     item.loading ?
                       <LoadingOutlined /> :
-                      <a key="list-delete" onClick={() => { onEdit(item.account) }}>编辑</a>,
-                    <a key="list-balance" onClick={() => { onBalance(item.account) }}>核算</a>
+                      <a key="list-delete" onClick={() => { onEdit(item.account) }}>操作</a>
                   ]}
                 >
                   <List.Item.Meta
@@ -83,7 +82,10 @@ class Account extends Component {
     iconType: '',
     selectedAccountTypePrefix: 'Assets',
     balanceAccount: null,
-    editAccount: null
+    editAccount: null,
+    transactions: [],
+    fetchTransactionLoading: false,
+    transactionDrawerVisible: false,
   }
 
   componentDidMount() {
@@ -186,8 +188,8 @@ class Account extends Component {
     this.setState({ drawerVisible: false })
   }
 
-  handleOpenBalanceDrawer = (account) => {
-    this.setState({ balanceDrawerVisible: true, balanceAccount: account })
+  handleOpenBalanceDrawer = () => {
+    this.setState({ balanceDrawerVisible: true, balanceAccount: this.state.editAccount })
   }
 
   handleCloseBalanceDrawer = () => {
@@ -211,12 +213,25 @@ class Account extends Component {
     }
   }
 
+  handleOpenTransactionDrawer = () => {
+    this.setState({ transactionDrawerVisible: true, fetchTransactionLoading: true })
+    fetch(`/api/auth/account/transaction?account=${this.state.editAccount}`)
+      .then(transactions => {
+        this.setState({ transactions })
+      }).catch(console.error).finally(() => { this.setState({ fetchTransactionLoading: false }) })
+  }
+
+  handleCloseTransactionDrawer = () => {
+    this.setState({ transactionDrawerVisible: false, transactions: [] })
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
     }
     const { accounts, loading, drawerVisible, balanceDrawerVisible, accountTypes, iconType, selectedAccountType,
-      selectedAccountTypePrefix, accountDrawerVisible, editAccount } = this.state
+      selectedAccountTypePrefix, accountDrawerVisible, editAccount,
+      transactions, transactionDrawerVisible, fetchTransactionLoading } = this.state
 
     return (
       <div className="account-page">
@@ -330,19 +345,19 @@ class Account extends Component {
         <div>
           <Tabs defaultActiveKey="Assets">
             <TabPane tab="资产账户" key="1">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} onBalance={this.handleOpenBalanceDrawer} />
+              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="收入账户" key="Income">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} onBalance={this.handleOpenBalanceDrawer} />
+              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="支出账户" key="Expenses">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} onBalance={this.handleOpenBalanceDrawer} />
+              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="负债账户" key="Liabilities">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} onBalance={this.handleOpenBalanceDrawer} />
+              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="权益账户" key="Equity">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} onBalance={this.handleOpenBalanceDrawer} />
+              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
           </Tabs>
         </div>
@@ -354,7 +369,7 @@ class Account extends Component {
             onClose={this.handleCloseBalanceDrawer}
             visible={balanceDrawerVisible}
             className="page-drawer"
-            height="300"
+            height="60vh"
             bodyStyle={{ display: 'flex', justifyContent: 'center' }}
           >
             <Form
@@ -389,7 +404,7 @@ class Account extends Component {
             onClose={this.handleCloseAccountDrawer}
             visible={accountDrawerVisible}
             className="page-drawer"
-            height="300"
+            height="60vh"
             bodyStyle={{ display: 'flex', justifyContent: 'center' }}
           >
             <div className="page-form">
@@ -404,12 +419,68 @@ class Account extends Component {
                 </Button>
               </Upload>
               <div style={{ height: '1rem' }}></div>
+              <Button size="large" style={{ width: '100%' }} onClick={this.handleOpenTransactionDrawer}>
+                交易记录
+              </Button>
+              <div style={{ height: '1rem' }}></div>
+              <Button size="large" style={{ width: '100%' }} onClick={this.handleOpenBalanceDrawer}>
+                核算账户
+              </Button>
+              <div style={{ height: '1rem' }}></div>
               <Button size="large" type="danger" loading={loading} className="submit-button" onClick={this.handleCloseAccount}>
                 关闭账户
               </Button>
             </div>
           </Drawer>
         </div>
+        <Drawer
+          title={<div style={{ fontSize: 14 }}><div>{editAccount}</div><div>最近{transactions.length}条交易记录</div></div>}
+          placement="bottom"
+          closable={true}
+          onClose={this.handleCloseTransactionDrawer}
+          visible={transactionDrawerVisible}
+          className="page-drawer"
+          height="90vh"
+          bodyStyle={{ display: 'flex', justifyContent: 'center' }}
+        >
+          <div className="page-form">
+            <List
+              itemLayout="horizontal"
+              loading={fetchTransactionLoading}
+              dataSource={transactions}
+              renderItem={item => (
+                <List.Item
+                  actions={[
+                    item.amount ? <div>{AccountAmount(editAccount, item.amount, item.commoditySymbol)}</div> : ''
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={<AccountIcon iconType={getAccountIcon(editAccount)} />}
+                    title={item.desc}
+                    description={
+                      <div>
+                        <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
+                        {
+                          item.commodity !== item.costCommodity &&
+                          <div style={{ marginTop: '13px' }}>
+                            <Tag>单价: {item.costPrice}</Tag>
+                            <Tag>成本: {AccountAmount(editAccount, item.costAmount, item.costCommoditySymbol)}</Tag>
+                            {
+                              item.marketAmount - item.costAmount >= 0 ?
+                              <Tag icon={<RiseOutlined />} color="#f50">{Number(item.marketAmount - item.costAmount).toFixed(2)}</Tag> :
+                              <Tag icon={<FallOutlined />} color="#1DA57A">{Number(item.marketAmount - item.costAmount).toFixed(2)}</Tag>
+                            }
+                            
+                          </div>
+                        }
+                      </div>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
+        </Drawer>
       </div >
     );
   }
