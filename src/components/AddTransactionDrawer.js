@@ -137,6 +137,8 @@ class AddTransactionDrawer extends Component {
 
   handleSetTemplate = (template) => {
     delete template.date;
+    template.entries.forEach(e => e.amount = Number(e.amount))
+    console.log(template)
     this.formRef.current.setFieldsValue(template)
   }
 
@@ -146,7 +148,7 @@ class AddTransactionDrawer extends Component {
         title="记账"
         placement="bottom"
         closable={true}
-        height="680"
+        height="90vh"
         className="page-drawer"
         bodyStyle={{ display: 'flex', justifyContent: 'center' }}
         {
@@ -154,7 +156,7 @@ class AddTransactionDrawer extends Component {
         }
       >
         <Form className="page-form" size="large" ref={this.formRef} onFinish={this.handleSubmit} validateMessages={validateMessages}>
-          <div>
+          <div style={{ marginBottom: '1rem' }}>
             {
               this.state.templates.map(t => (
                 <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
@@ -248,12 +250,13 @@ class AddTransactionDrawer extends Component {
                           >
                             <Input />
                           </Form.Item>
-                          <Form.Item
-                            name={[field.name, 'amount']}
-                            fieldKey={[field.fieldKey, 'amount']}
-                            rules={[{ required: true, message: '金额' }]}
-                          >
-                            <div style={{ display: 'flex' }}>
+                          <div style={{ display: 'flex' }}>
+                            <Form.Item
+                              name={[field.name, 'amount']}
+                              fieldKey={[field.fieldKey, 'amount']}
+                              rules={[{ required: true, message: '金额' }]}
+                              style={{ flex: 1 }}
+                            >
                               <Input
                                 type="number"
                                 addonBefore={accountCommodity}
@@ -261,9 +264,9 @@ class AddTransactionDrawer extends Component {
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}
                               />
-                              <CloseCircleOutlined style={{ width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={() => { remove(field.name); }} />
-                            </div>
-                          </Form.Item>
+                            </Form.Item>
+                            <CloseCircleOutlined style={{ width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={() => { remove(field.name); }} />
+                          </div>
                           <Divider />
                         </div>
                       )
