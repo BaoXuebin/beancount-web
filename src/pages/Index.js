@@ -95,6 +95,7 @@ class Index extends Component {
   }
 
   handleAddTransaction = () => {
+    this.queryMonthStats()
     this.queryEntryList()
     this.handleCloseDrawer()
   }
