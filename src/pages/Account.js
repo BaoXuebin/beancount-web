@@ -2,7 +2,7 @@ import { FallOutlined, FormOutlined, LoadingOutlined, PlusOutlined, RiseOutlined
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
 import { fetch, getAccountCata, getAccountIcon, getAccountName } from '../config/Util';
@@ -448,36 +448,60 @@ class Account extends Component {
               itemLayout="horizontal"
               loading={fetchTransactionLoading}
               dataSource={transactions}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    item.amount ? <div>{AccountAmount(editAccount, item.amount, item.commoditySymbol)}</div> : ''
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={<AccountIcon iconType={getAccountIcon(editAccount)} />}
-                    title={item.desc}
-                    description={
-                      <div>
-                        <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
-                        {
-                          item.commodity !== item.costCommodity &&
-                          <div style={{ marginTop: '13px' }}>
-                            <Tag>单价: {item.costPrice}</Tag>
-                            <Tag>成本: {AccountAmount(editAccount, item.costAmount, item.costCommoditySymbol)}</Tag>
-                            {
-                              item.marketAmount - item.costAmount >= 0 ?
-                              <Tag icon={<RiseOutlined />} color="#f50">{Number(item.marketAmount - item.costAmount).toFixed(2)}</Tag> :
-                              <Tag icon={<FallOutlined />} color="#1DA57A">{Number(item.marketAmount - item.costAmount).toFixed(2)}</Tag>
-                            }
-                            
-                          </div>
-                        }
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
+              renderItem={item => {
+                // 是否是投资账户
+                const isInvestAccount = item.commodity !== item.costCommodity
+                const isSale = Boolean(item.saleAmount)
+                // 成本
+                const costAmount = isSale ? -item.costAmount : item.costAmount
+                // 售价
+                const saleAmount = isSale ? -item.saleAmount : item.saleAmount
+                // 收益
+                const investProfit = saleAmount - costAmount
+                return (
+                  <List.Item
+                    actions={[
+                      item.amount ? AccountAmount(editAccount, item.amount, item.commoditySymbol, item.commodity) : ''
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={<AccountIcon iconType={getAccountIcon(editAccount)} />}
+                      title={item.desc}
+                      description={
+                        <div>
+                          <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
+                          {
+                            isInvestAccount &&
+                            <div style={{ marginTop: '13px' }}>
+                              {
+                                isSale ?
+                                  <Fragment>
+                                    <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag>
+                                    <Tag>净值: {item.salePrice} / {AccountAmount(editAccount, saleAmount, item.saleCommoditySymbol)}</Tag>
+                                    {
+                                      investProfit >= 0 ?
+                                        <Fragment>
+                                          <Tag icon={<RiseOutlined />} color="#f50">{(100 * Number(investProfit) / Number(costAmount)).toFixed(2)}%</Tag>
+                                          <Tag color="#f50">+{Math.abs(investProfit).toFixed(2)}</Tag>
+                                        </Fragment> :
+                                        <Fragment>
+                                          <Tag icon={<FallOutlined />} color="#1DA57A">{(100 * Number(investProfit) / Number(costAmount)).toFixed(2)}%</Tag>
+                                          <Tag color="#1DA57A">-{Math.abs(investProfit).toFixed(2)}</Tag>
+                                        </Fragment>
+                                    }
+                                  </Fragment> :
+                                  <Fragment>
+                                    <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag>
+                                  </Fragment>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    />
+                  </List.Item>
+                )
+              }}
             />
           </div>
         </Drawer>

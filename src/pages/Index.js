@@ -150,7 +150,7 @@ class Index extends Component {
                       renderItem={item => (
                         <List.Item
                           actions={[
-                            item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol)}</div> : ''
+                            item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
                           ]}
                         >
                           <List.Item.Meta
