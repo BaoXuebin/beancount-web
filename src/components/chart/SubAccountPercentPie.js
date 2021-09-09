@@ -123,7 +123,12 @@ class SubAccountPercentPie extends Component {
               }}
               label={['count', {
                 content: (data) => {
-                  return `${data.item}: ${Number(data.percent * 100).toFixed(2)}%`;
+                  let item = data.item
+                  if (item.indexOf(':') >= 0) {
+                    const arr = item.split(':')
+                    item = arr[arr.length - 1]
+                  }
+                  return `${item}: ${Number(data.percent * 100).toFixed(2)}%`;
                 },
               }]}
             />
