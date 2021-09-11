@@ -1,4 +1,4 @@
-import { CloseCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, PlusOutlined, TagsOutlined } from '@ant-design/icons';
 import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -36,12 +36,18 @@ class AddTransactionDrawer extends Component {
     payees: [],
     autoCompletePayees: [],
     templates: [], // 记账模版
+    showTag: false,
+    tags: []
   }
 
   componentDidMount() {
-    this.queryAllValidAccounts()
-    this.queryLatest100Payees()
-    this.queryTransactionTemplates()
+    // 延迟一秒请求
+    setTimeout(() => {
+      this.queryAllValidAccounts()
+      this.queryLatest100Payees()
+      this.queryTransactionTemplates()
+      this.queryAllTags()
+    }, 1000)
   }
 
   queryAllValidAccounts = () => {
@@ -62,6 +68,13 @@ class AddTransactionDrawer extends Component {
     fetch('/api/auth/transaction/template')
       .then(templates => {
         this.setState({ templates })
+      }).catch(console.error)
+  }
+
+  queryAllTags = () => {
+    fetch('/api/auth/tags')
+      .then(tags => {
+        this.setState({ tags })
       }).catch(console.error)
   }
 
@@ -143,6 +156,10 @@ class AddTransactionDrawer extends Component {
     this.formRef.current.setFieldsValue(template)
   }
 
+  handleToggleShowTagInput = () => {
+    this.setState({ showTag: !this.state.showTag })
+  }
+
   render() {
     return (
       <Drawer
@@ -181,9 +198,27 @@ class AddTransactionDrawer extends Component {
               ))}
             </AutoComplete>
           </Form.Item>
-          <Form.Item name="desc" rules={[{ required: true }]}>
-            <Input placeholder="详细描述，记录细节" />
-          </Form.Item>
+          <div style={{ display: 'flex' }}>
+            <Form.Item
+              name="desc" rules={[{ required: true, message: '详细描述' }]}
+              style={{ flex: 1 }}
+            >
+              <Input
+                placeholder="详细描述，记录细节"
+              />
+            </Form.Item>
+            <TagsOutlined style={{ color: this.state.showTag ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowTagInput} />
+          </div>
+          {
+            this.state.showTag &&
+            <Form.Item name="tags" rules={[{ required: true }]}>
+              <Select mode="tags" style={{ width: '100%' }} placeholder="标签（不支持中文），旅行/计划/学习">
+                {
+                  this.state.tags.map(tag => <Select.Option key={tag} value={tag}>{tag}</Select.Option>)
+                }
+              </Select>
+            </Form.Item>
+          }
           <Divider plain>账户明细</Divider>
           <Form.Item>
             <FormList form={this.formRef} name="entries">

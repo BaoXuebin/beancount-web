@@ -1,5 +1,5 @@
 import { EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
-import { Avatar, Button, Card, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
+import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
 import AccountAmount from '../components/AccountAmount';
@@ -8,6 +8,7 @@ import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
 import AddTransactionDrawer from '../components/AddTransactionDrawer';
 import MonthSelector from '../components/MonthSelector';
 import StatisticAmount from '../components/StatisticAmount';
+import TagTransactionDrawer from '../components/TagTransactionDrawer';
 import { AccountTypeDict, fetch, getAccountIcon, getAccountName } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
@@ -15,7 +16,7 @@ import './styles/Index.css';
 
 const TabPane = Tabs.TabPane
 
-const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer }) => (
+const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer, onOpenTagDrawer }) => (
   <div style={{ minHeight: '400px' }}>
     {
       (!loading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
@@ -39,6 +40,7 @@ const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer
                       title={item.desc}
                       description={
                         <div>
+                          <div>{item.tags.map(t => <a style={{ marginRight: '4px' }} onClick={() => onOpenTagDrawer(t)}>#{t}</a>)}</div>
                           {item.date}&nbsp;
                           <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { onOpenAccountDrawer(item.account) }}>{getAccountName(item.account)}</span>
                           &nbsp;{item.payee}
@@ -74,7 +76,9 @@ class Index extends Component {
     selectedMonth: this.currentMonth,
     addTransactionDrawerVisible: false,
     accountTransactionDrawerVisible: false,
-    selectedAccount: null
+    selectedAccount: null,
+    tagTransactionDrawerVisible: false,
+    selectedTag: null
   }
 
   componentDidMount() {
@@ -158,12 +162,20 @@ class Index extends Component {
     this.setState({ accountTransactionDrawerVisible: false })
   }
 
+  handleOpenTagTransactionDrawer = (selectedTag) => {
+    this.setState({ tagTransactionDrawerVisible: true, selectedTag })
+  }
+
+  handleCloseTagTransactionDrawer = () => {
+    this.setState({ tagTransactionDrawerVisible: false })
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
     }
 
-    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible } = this.state
+    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible, tagTransactionDrawerVisible } = this.state
     const transactionGroups = Object.values(transactionDateGroup);
     return (
       <div className="index-page page">
@@ -187,7 +199,7 @@ class Index extends Component {
             </Col>
           </Row>
         </div>
-        <div style={{ margin: '30px auto' }}>
+        {/* <div style={{ margin: '30px auto' }}>
           <Card style={{ width: '100%', marginTop: 16 }} loading={loading}>
             <Card.Meta
               avatar={
@@ -197,16 +209,34 @@ class Index extends Component {
               description="This is the description"
             />
           </Card>
-        </div>
+        </div> */}
         <Tabs centered defaultActiveKey="Expenses" onChange={this.handleChangeEntryType} style={{ marginTop: '1rem' }}>
           <TabPane tab="收入明细" key="Income">
-            <TransactionList type={'Income'} loading={listLoading} transactionGroups={transactionGroups} onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer} />
+            <TransactionList
+              type={'Income'}
+              loading={listLoading}
+              transactionGroups={transactionGroups}
+              onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
+              onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
+            />
           </TabPane>
           <TabPane tab="支出明细" key="Expenses">
-            <TransactionList type={'Expenses'} loading={listLoading} transactionGroups={transactionGroups} onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer} />
+            <TransactionList
+              type={'Expenses'}
+              loading={listLoading}
+              transactionGroups={transactionGroups}
+              onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
+              onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
+            />
           </TabPane>
           <TabPane tab="负债明细" key="Liabilities">
-            <TransactionList type={'Liabilities'} loading={listLoading} transactionGroups={transactionGroups} onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer} />
+            <TransactionList
+              type={'Liabilities'}
+              loading={listLoading}
+              transactionGroups={transactionGroups}
+              onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
+              onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
+            />
           </TabPane>
         </Tabs>
         <AddTransactionDrawer
@@ -219,6 +249,11 @@ class Index extends Component {
           account={this.state.selectedAccount}
           visible={accountTransactionDrawerVisible}
           onClose={this.handleCloseAccountTransactionDrawer}
+        />
+        <TagTransactionDrawer
+          tag={this.state.selectedTag}
+          visible={tagTransactionDrawerVisible}
+          onClose={this.handleCloseTagTransactionDrawer}
         />
       </div>
     );

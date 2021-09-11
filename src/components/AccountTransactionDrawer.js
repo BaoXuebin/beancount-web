@@ -25,8 +25,9 @@ class AccountTransactionDrawer extends Component {
   }
 
   handleQueryAccountTransaction = (account) => {
+    if (!account) return;
     this.setState({ loading: true })
-    fetch(`/api/auth/account/transaction?account=${account}`)
+    fetch(`/api/auth/transaction?account=${account}`)
       .then(transactions => {
         this.setState({ transactions })
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
@@ -73,6 +74,7 @@ class AccountTransactionDrawer extends Component {
                     title={item.desc}
                     description={
                       <div>
+                        <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
                         <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
                         {
                           isInvestAccount &&
