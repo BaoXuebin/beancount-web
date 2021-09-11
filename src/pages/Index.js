@@ -1,9 +1,10 @@
 import { EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
-import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
+import { Avatar, Button, Card, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
 import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
+import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
 import AddTransactionDrawer from '../components/AddTransactionDrawer';
 import MonthSelector from '../components/MonthSelector';
 import StatisticAmount from '../components/StatisticAmount';
@@ -14,6 +15,45 @@ import './styles/Index.css';
 
 const TabPane = Tabs.TabPane
 
+const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer }) => (
+  <div style={{ minHeight: '400px' }}>
+    {
+      (!loading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
+        <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={loading}>
+          {
+            transactionGroups.map(group => (
+              <List
+                split={false}
+                key={group.date}
+                header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
+                itemLayout="horizontal"
+                dataSource={group.children}
+                renderItem={item => (
+                  <List.Item
+                    actions={[
+                      item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                      title={item.desc}
+                      description={
+                        <div>
+                          {item.date}&nbsp;
+                          <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { onOpenAccountDrawer(item.account) }}>{getAccountName(item.account)}</span>
+                          &nbsp;{item.payee}
+                        </div>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ))
+          }
+        </Spin>
+    }
+  </div>
+)
 class Index extends Component {
 
   theme = this.context.theme
@@ -32,7 +72,9 @@ class Index extends Component {
     transactionDateGroup: {},
     // 所有记账的月份，初始化当月
     selectedMonth: this.currentMonth,
-    addTransactionDrawerVisible: false
+    addTransactionDrawerVisible: false,
+    accountTransactionDrawerVisible: false,
+    selectedAccount: null
   }
 
   componentDidMount() {
@@ -108,12 +150,20 @@ class Index extends Component {
     window.localStorage.setItem('hideMoney', hideMoney)
   }
 
+  handleOpenAccountTransactionDrawer = (selectedAccount) => {
+    this.setState({ accountTransactionDrawerVisible: true, selectedAccount })
+  }
+
+  handleCloseAccountTransactionDrawer = () => {
+    this.setState({ accountTransactionDrawerVisible: false })
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
     }
 
-    const { loading, type, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney } = this.state
+    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible } = this.state
     const transactionGroups = Object.values(transactionDateGroup);
     return (
       <div className="index-page page">
@@ -137,105 +187,39 @@ class Index extends Component {
             </Col>
           </Row>
         </div>
-        <Tabs centered defaultActiveKey="Expenses" onChange={this.handleChangeEntryType}>
-          <TabPane tab="收入明细" key="Income">
-            <div>
-              {
-                (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
-                  <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
-                    {
-                      transactionGroups.map(group => (
-                        <List
-                          key={group.date}
-                          header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
-                          itemLayout="horizontal"
-                          dataSource={group.children}
-                          renderItem={item => (
-                            <List.Item
-                              actions={[
-                                item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
-                              ]}
-                            >
-                              <List.Item.Meta
-                                avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                                title={item.desc}
-                                description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
-                              />
-                            </List.Item>
-                          )}
-                        />
-                      ))
-                    }
-                  </Spin>
+        <div style={{ margin: '30px auto' }}>
+          <Card style={{ width: '100%', marginTop: 16 }} loading={loading}>
+            <Card.Meta
+              avatar={
+                <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
               }
-            </div>
+              title="Card title"
+              description="This is the description"
+            />
+          </Card>
+        </div>
+        <Tabs centered defaultActiveKey="Expenses" onChange={this.handleChangeEntryType} style={{ marginTop: '1rem' }}>
+          <TabPane tab="收入明细" key="Income">
+            <TransactionList type={'Income'} loading={listLoading} transactionGroups={transactionGroups} onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer} />
           </TabPane>
           <TabPane tab="支出明细" key="Expenses">
-            <div style={{ minHeight: 400 }}>
-              {
-                (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
-                  <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
-                    {
-                      transactionGroups.map(group => (
-                        <List
-                          key={group.date}
-                          header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
-                          itemLayout="horizontal"
-                          dataSource={group.children}
-                          renderItem={item => (
-                            <List.Item
-                              actions={[
-                                item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
-                              ]}
-                            >
-                              <List.Item.Meta
-                                avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                                title={item.desc}
-                                description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
-                              />
-                            </List.Item>
-                          )}
-                        />
-                      ))
-                    }
-                  </Spin>
-              }
-            </div>
+            <TransactionList type={'Expenses'} loading={listLoading} transactionGroups={transactionGroups} onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer} />
           </TabPane>
           <TabPane tab="负债明细" key="Liabilities">
-            <div>
-              {
-                (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
-                  <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
-                    {
-                      transactionGroups.map(group => (
-                        <List
-                          key={group.date}
-                          header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
-                          itemLayout="horizontal"
-                          dataSource={group.children}
-                          renderItem={item => (
-                            <List.Item
-                              actions={[
-                                item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
-                              ]}
-                            >
-                              <List.Item.Meta
-                                avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                                title={item.desc}
-                                description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
-                              />
-                            </List.Item>
-                          )}
-                        />
-                      ))
-                    }
-                  </Spin>
-              }
-            </div>
+            <TransactionList type={'Liabilities'} loading={listLoading} transactionGroups={transactionGroups} onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer} />
           </TabPane>
         </Tabs>
-        <AddTransactionDrawer {...this.props} onClose={this.handleCloseDrawer} onSubmit={this.handleAddTransaction} visible={addTransactionDrawerVisible} />
+        <AddTransactionDrawer
+          {...this.props}
+          visible={addTransactionDrawerVisible}
+          onClose={this.handleCloseDrawer}
+          onSubmit={this.handleAddTransaction}
+        />
+        <AccountTransactionDrawer
+          account={this.state.selectedAccount}
+          visible={accountTransactionDrawerVisible}
+          onClose={this.handleCloseAccountTransactionDrawer}
+        />
       </div>
     );
   }

@@ -1,10 +1,11 @@
-import { FallOutlined, FormOutlined, LoadingOutlined, PlusOutlined, RiseOutlined, UploadOutlined } from '@ant-design/icons';
+import { FormOutlined, LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
+import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
 import { fetch, getAccountCata, getAccountIcon, getAccountName } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
@@ -83,8 +84,6 @@ class Account extends Component {
     selectedAccountTypePrefix: 'Assets',
     balanceAccount: null,
     editAccount: null,
-    transactions: [],
-    fetchTransactionLoading: false,
     transactionDrawerVisible: false,
   }
 
@@ -214,11 +213,7 @@ class Account extends Component {
   }
 
   handleOpenTransactionDrawer = () => {
-    this.setState({ transactionDrawerVisible: true, fetchTransactionLoading: true })
-    fetch(`/api/auth/account/transaction?account=${this.state.editAccount}`)
-      .then(transactions => {
-        this.setState({ transactions })
-      }).catch(console.error).finally(() => { this.setState({ fetchTransactionLoading: false }) })
+    this.setState({ transactionDrawerVisible: true })
   }
 
   handleCloseTransactionDrawer = () => {
@@ -230,8 +225,7 @@ class Account extends Component {
       this.theme = this.context.theme
     }
     const { accounts, loading, drawerVisible, balanceDrawerVisible, accountTypes, iconType, selectedAccountType,
-      selectedAccountTypePrefix, accountDrawerVisible, editAccount,
-      transactions, transactionDrawerVisible, fetchTransactionLoading } = this.state
+      selectedAccountTypePrefix, accountDrawerVisible, editAccount, transactionDrawerVisible } = this.state
 
     return (
       <div className="account-page">
@@ -433,78 +427,11 @@ class Account extends Component {
             </div>
           </Drawer>
         </div>
-        <Drawer
-          title={<div style={{ fontSize: 14 }}><div>{editAccount}</div><div>最近{transactions.length}条交易记录</div></div>}
-          placement="bottom"
-          closable={true}
-          onClose={this.handleCloseTransactionDrawer}
+        <AccountTransactionDrawer
+          account={this.state.editAccount}
           visible={transactionDrawerVisible}
-          className="page-drawer"
-          height="90vh"
-          bodyStyle={{ display: 'flex', justifyContent: 'center' }}
-        >
-          <div className="page-form">
-            <List
-              itemLayout="horizontal"
-              loading={fetchTransactionLoading}
-              dataSource={transactions}
-              renderItem={item => {
-                // 是否是投资账户
-                const isInvestAccount = item.commodity !== item.costCommodity
-                const isSale = Boolean(item.saleAmount)
-                // 成本
-                const costAmount = isSale ? -item.costAmount : item.costAmount
-                // 售价
-                const saleAmount = isSale ? -item.saleAmount : item.saleAmount
-                // 收益
-                const investProfit = saleAmount - costAmount
-                return (
-                  <List.Item
-                    actions={[
-                      item.amount ? AccountAmount(editAccount, item.amount, item.commoditySymbol, item.commodity) : ''
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={<AccountIcon iconType={getAccountIcon(editAccount)} />}
-                      title={item.desc}
-                      description={
-                        <div>
-                          <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
-                          {
-                            isInvestAccount &&
-                            <div style={{ marginTop: '13px' }}>
-                              {
-                                isSale ?
-                                  <Fragment>
-                                    <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag>
-                                    <Tag>净值: {item.salePrice} / {AccountAmount(editAccount, saleAmount, item.saleCommoditySymbol)}</Tag>
-                                    {
-                                      investProfit >= 0 ?
-                                        <Fragment>
-                                          <Tag icon={<RiseOutlined />} color="#f50">{(100 * Number(investProfit) / Number(costAmount)).toFixed(2)}%</Tag>
-                                          <Tag color="#f50">+{Math.abs(investProfit).toFixed(2)}</Tag>
-                                        </Fragment> :
-                                        <Fragment>
-                                          <Tag icon={<FallOutlined />} color="#1DA57A">{(100 * Number(investProfit) / Number(costAmount)).toFixed(2)}%</Tag>
-                                          <Tag color="#1DA57A">-{Math.abs(investProfit).toFixed(2)}</Tag>
-                                        </Fragment>
-                                    }
-                                  </Fragment> :
-                                  <Fragment>
-                                    <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag>
-                                  </Fragment>
-                              }
-                            </div>
-                          }
-                        </div>
-                      }
-                    />
-                  </List.Item>
-                )
-              }}
-            />
-          </div>
-        </Drawer>
+          onClose={this.handleCloseTransactionDrawer}
+        />
       </div >
     );
   }
