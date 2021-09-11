@@ -3,7 +3,8 @@ import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Ta
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component, Fragment } from 'react';
-import { fetch } from '../config/Util';
+import { fetch, getAccountIcon } from '../config/Util';
+import AccountIcon from './AccountIcon';
 
 const { Option } = Select;
 
@@ -221,7 +222,10 @@ class AddTransactionDrawer extends Component {
                               style={{ marginRight: '10px' }}
                             >
                               {
-                                this.state.accounts.map(account => <Option value={account.account}>{account.account}</Option>)
+                                this.state.accounts.map(account => <Option value={account.account}>
+                                  <AccountIcon style={{ width: '22px', height: '22px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
+                                  {account.account}
+                                </Option>)
                               }
                             </Select>
                           </Form.Item>

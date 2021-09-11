@@ -1,5 +1,5 @@
 import { EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
-import { Button, Col, Divider, Empty, List, Row, Spin, Tag } from 'antd';
+import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
 import AccountAmount from '../components/AccountAmount';
@@ -11,6 +11,8 @@ import { AccountTypeDict, fetch, getAccountIcon, getAccountName } from '../confi
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 import './styles/Index.css';
+
+const TabPane = Tabs.TabPane
 
 class Index extends Component {
 
@@ -118,54 +120,121 @@ class Index extends Component {
         <div className="top-wrapper">
           <div>
             <MonthSelector value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
-            &nbsp;&nbsp;{ hideMoney ? <EyeInvisibleOutlined onClick={this.handleHideMoney} /> : <EyeOutlined onClick={this.handleHideMoney} /> }
+            &nbsp;&nbsp;{hideMoney ? <EyeInvisibleOutlined onClick={this.handleHideMoney} /> : <EyeOutlined onClick={this.handleHideMoney} />}
           </div>
           <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
         </div>
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
+        <div style={{ textAlign: 'center' }}>
           <Row>
-            <Col span={8} onClick={() => { this.handleChangeEntryType('Income') }}>
+            <Col span={8}>
               <StatisticAmount hide={hideMoney} title={`本月${AccountTypeDict['Income']}`} value={Math.abs(this.state.Income)} loading={loading} prefix={this.state.Income > 0 ? '-' : '+'} valueStyle={{ color: '#cf1322' }} />
             </Col>
-            <Col span={8} onClick={() => { this.handleChangeEntryType('Expenses') }}>
+            <Col span={8}>
               <StatisticAmount hide={hideMoney} title={`本月${AccountTypeDict['Expenses']}`} value={Math.abs(this.state.Expenses)} loading={loading} prefix={this.state.Expenses >= 0 ? '-' : '+'} valueStyle={{ color: '#3f8600' }} />
             </Col>
-            <Col span={8} onClick={() => { this.handleChangeEntryType('Liabilities') }}>
+            <Col span={8}>
               <StatisticAmount hide={hideMoney} title={`本月${AccountTypeDict['Liabilities']}`} value={Math.abs(this.state.Liabilities)} loading={loading} prefix={this.state.Liabilities > 0 ? '+' : '-'} valueStyle={{ color: '#3f8600' }} />
             </Col>
           </Row>
         </div>
-        <Divider plain>本月{AccountTypeDict[this.state.type]}明细</Divider>
-        <div>
-          {
-            (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
-              <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
-                {
-                  transactionGroups.map(group => (
-                    <List
-                      key={group.date}
-                      header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
-                      itemLayout="horizontal"
-                      dataSource={group.children}
-                      renderItem={item => (
-                        <List.Item
-                          actions={[
-                            item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
-                          ]}
-                        >
-                          <List.Item.Meta
-                            avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                            title={item.desc}
-                            description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
-                          />
-                        </List.Item>
-                      )}
-                    />
-                  ))
-                }
-              </Spin>
-          }
-        </div>
+        <Tabs centered defaultActiveKey="Expenses" onChange={this.handleChangeEntryType}>
+          <TabPane tab="收入明细" key="Income">
+            <div>
+              {
+                (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
+                  <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
+                    {
+                      transactionGroups.map(group => (
+                        <List
+                          key={group.date}
+                          header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
+                          itemLayout="horizontal"
+                          dataSource={group.children}
+                          renderItem={item => (
+                            <List.Item
+                              actions={[
+                                item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
+                              ]}
+                            >
+                              <List.Item.Meta
+                                avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                                title={item.desc}
+                                description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      ))
+                    }
+                  </Spin>
+              }
+            </div>
+          </TabPane>
+          <TabPane tab="支出明细" key="Expenses">
+            <div style={{ minHeight: 400 }}>
+              {
+                (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
+                  <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
+                    {
+                      transactionGroups.map(group => (
+                        <List
+                          key={group.date}
+                          header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
+                          itemLayout="horizontal"
+                          dataSource={group.children}
+                          renderItem={item => (
+                            <List.Item
+                              actions={[
+                                item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
+                              ]}
+                            >
+                              <List.Item.Meta
+                                avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                                title={item.desc}
+                                description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      ))
+                    }
+                  </Spin>
+              }
+            </div>
+          </TabPane>
+          <TabPane tab="负债明细" key="Liabilities">
+            <div>
+              {
+                (!listLoading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
+                  <Spin tip="加载中..." style={{ marginTop: '1rem' }} spinning={listLoading}>
+                    {
+                      transactionGroups.map(group => (
+                        <List
+                          key={group.date}
+                          header={<div>{dayjs(group.date).format('YYYY年M月D号')}&nbsp;&nbsp;{group.date === dayjs().format('YYYY-MM-DD') && <Tag color="#1DA57A">今天</Tag>}</div>}
+                          itemLayout="horizontal"
+                          dataSource={group.children}
+                          renderItem={item => (
+                            <List.Item
+                              actions={[
+                                item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
+                              ]}
+                            >
+                              <List.Item.Meta
+                                avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                                title={item.desc}
+                                description={`${item.date} ${getAccountName(item.account)} ${item.payee}`}
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      ))
+                    }
+                  </Spin>
+              }
+            </div>
+          </TabPane>
+        </Tabs>
         <AddTransactionDrawer {...this.props} onClose={this.handleCloseDrawer} onSubmit={this.handleAddTransaction} visible={addTransactionDrawerVisible} />
       </div>
     );
