@@ -245,16 +245,22 @@ class Index extends Component {
           onClose={this.handleCloseDrawer}
           onSubmit={this.handleAddTransaction}
         />
-        <AccountTransactionDrawer
-          account={this.state.selectedAccount}
-          visible={accountTransactionDrawerVisible}
-          onClose={this.handleCloseAccountTransactionDrawer}
-        />
-        <TagTransactionDrawer
-          tag={this.state.selectedTag}
-          visible={tagTransactionDrawerVisible}
-          onClose={this.handleCloseTagTransactionDrawer}
-        />
+        {
+          this.state.selectedAccount &&
+          <AccountTransactionDrawer
+            account={this.state.selectedAccount}
+            visible={accountTransactionDrawerVisible}
+            onClose={this.handleCloseAccountTransactionDrawer}
+          />
+        }
+        {
+          this.state.selectedTag &&
+          <TagTransactionDrawer
+            tag={this.state.selectedTag}
+            visible={tagTransactionDrawerVisible}
+            onClose={this.handleCloseTagTransactionDrawer}
+          />
+        }
       </div>
     );
   }

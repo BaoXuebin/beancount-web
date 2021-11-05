@@ -3,8 +3,10 @@ import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Ta
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component } from 'react';
+import { Fragment } from 'react/cjs/react.production.min';
 import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
+import AccountSyncPriceDrawer from '../components/AccountSyncPriceDrawer';
 import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
 import { fetch, getAccountCata, getAccountIcon, getAccountName } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
@@ -34,29 +36,34 @@ const AccountList = ({ loading, accounts, onEdit }) => {
     <Collapse ghost>
       {
         Object.values(groupByAccountsDict).map(groupByAccount => {
-          const totalAmount = groupByAccount.children.map(acc => Decimal(acc.amount || 0)).reduce((a, b) => a.plus(b))
+          const totalAmount = groupByAccount.children.map(acc => Decimal(acc.priceAmount || 0)).reduce((a, b) => a.plus(b))
           return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (￥${Math.abs(totalAmount)})`}>
             <List
               loading={loading}
               itemLayout="horizontal"
               dataSource={groupByAccount.children}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol)}</div> : '',
-                    (item.amount && item.price && item.commodity !== item.priceCommodity) ? <div>{AccountAmount(item.account, Decimal(item.amount).mul(Decimal(item.price)), item.priceCommoditySymbol)}</div> : '',
-                    item.loading ?
-                      <LoadingOutlined /> :
-                      <a key="list-delete" onClick={() => { onEdit(item.account) }}>操作</a>
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                    title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
-                    description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.commodity || ''}`}
-                  />
-                </List.Item>
-              )}
+              renderItem={item => {
+                const actions = []
+                if (item.priceAmount) {
+                  actions.push(<div>{AccountAmount(item.account, item.priceAmount, item.priceCommoditySymbol)}</div>)
+                }
+                if (item.loading) {
+                  actions.push(<LoadingOutlined />)
+                } else {
+                  actions.push(<a key="list-delete" onClick={() => { onEdit(item, !item.priceCommodity || (item.commodity === item.priceCommodity)) }}>操作</a>)
+                }
+                return (
+                  <List.Item
+                    actions={actions}
+                  >
+                    <List.Item.Meta
+                      avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                      title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
+                      description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.commodity || ''}`}
+                    />
+                  </List.Item>
+                )
+              }}
             />
           </Panel>
         })
@@ -83,8 +90,12 @@ class Account extends Component {
     iconType: '',
     selectedAccountTypePrefix: 'Assets',
     balanceAccount: null,
-    editAccount: null,
+    editAccount: {},
     transactionDrawerVisible: false,
+    syncPriceAccount: null,
+    syncPriceDrawerVisible: false,
+    // 被编辑的账户是同样的货币单位
+    editAccountDiffCommodity: false
   }
 
   componentDidMount() {
@@ -141,7 +152,7 @@ class Account extends Component {
   };
 
   handleCloseAccount = () => {
-    const account = this.state.editAccount;
+    const account = this.state.editAccount.account;
     const accounts = this.state.accounts.map(acc => acc.account === account ? Object.assign({ loading: true }, acc) : acc)
     this.setState({ accounts })
     const date = dayjs().format('YYYY-MM-DD')
@@ -188,15 +199,23 @@ class Account extends Component {
   }
 
   handleOpenBalanceDrawer = () => {
-    this.setState({ balanceDrawerVisible: true, balanceAccount: this.state.editAccount })
+    this.setState({ balanceDrawerVisible: true, balanceAccount: this.state.editAccount.account })
   }
 
   handleCloseBalanceDrawer = () => {
     this.setState({ balanceDrawerVisible: false, balanceAccount: null })
   }
 
-  handleOpenAccountDrawer = (account) => {
-    this.setState({ accountDrawerVisible: true, editAccount: account })
+  handleOpenSyncPriceDrawer = () => {
+    this.setState({ syncPriceDrawerVisible: true, syncPriceAccount: this.state.editAccount })
+  }
+
+  handleCloseSyncPriceDrawer = () => {
+    this.setState({ syncPriceDrawerVisible: false, syncPriceAccount: null })
+  }
+
+  handleOpenAccountDrawer = (account, editAccountDiffCommodity) => {
+    this.setState({ accountDrawerVisible: true, editAccount: account, editAccountDiffCommodity })
   }
 
   handleCloseAccountDrawer = () => {
@@ -225,7 +244,7 @@ class Account extends Component {
       this.theme = this.context.theme
     }
     const { accounts, loading, drawerVisible, balanceDrawerVisible, accountTypes, iconType, selectedAccountType,
-      selectedAccountTypePrefix, accountDrawerVisible, editAccount, transactionDrawerVisible } = this.state
+      selectedAccountTypePrefix, accountDrawerVisible, editAccount, transactionDrawerVisible, syncPriceDrawerVisible, syncPriceAccount } = this.state
 
     return (
       <div className="account-page">
@@ -392,7 +411,7 @@ class Account extends Component {
             </Form>
           </Drawer>
           <Drawer
-            title={`账户：${this.state.editAccount}`}
+            title={`账户：${this.state.editAccount.account}`}
             placement="bottom"
             closable={true}
             onClose={this.handleCloseAccountDrawer}
@@ -404,7 +423,7 @@ class Account extends Component {
             <div className="page-form">
               <Upload style={{ display: 'block' }}
                 name='file'
-                action={`/api/auth/account/icon?account=${editAccount}`}
+                action={`/api/auth/account/icon?account=${editAccount.account}`}
                 headers={{ ledgerId: window.localStorage.getItem("ledgerId") }}
                 onChange={this.handleChangeFile}
               >
@@ -420,6 +439,14 @@ class Account extends Component {
               <Button size="large" style={{ width: '100%' }} onClick={this.handleOpenBalanceDrawer}>
                 核算账户
               </Button>
+              {
+                !this.state.editAccountDiffCommodity && <Fragment>
+                  <div style={{ height: '1rem' }}></div>
+                  <Button size="large" style={{ width: '100%' }} onClick={this.handleOpenSyncPriceDrawer}>
+                    同步净值
+                  </Button>
+                </Fragment>
+              }
               <div style={{ height: '1rem' }}></div>
               <Button size="large" type="danger" loading={loading} className="submit-button" onClick={this.handleCloseAccount}>
                 关闭账户
@@ -428,9 +455,14 @@ class Account extends Component {
           </Drawer>
         </div>
         <AccountTransactionDrawer
-          account={this.state.editAccount}
+          account={this.state.editAccount.account}
           visible={transactionDrawerVisible}
           onClose={this.handleCloseTransactionDrawer}
+        />
+        <AccountSyncPriceDrawer
+          account={this.state.editAccount}
+          visible={syncPriceDrawerVisible}
+          onClose={this.handleCloseSyncPriceDrawer}
         />
       </div >
     );
