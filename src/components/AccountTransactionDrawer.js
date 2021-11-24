@@ -4,6 +4,7 @@ import { Component, Fragment } from 'react';
 import { fetch, getAccountIcon } from '../config/Util';
 import AccountAmount from './AccountAmount';
 import AccountIcon from './AccountIcon';
+import Decimal from 'decimal.js';
 
 class AccountTransactionDrawer extends Component {
 
@@ -55,18 +56,20 @@ class AccountTransactionDrawer extends Component {
             dataSource={transactions}
             renderItem={item => {
               // 是否是投资账户
-              const isInvestAccount = item.commodity !== item.costCommodity
-              const isSale = Boolean(item.saleAmount)
-              // 成本
-              const costAmount = isSale ? -item.costAmount : item.costAmount
-              // 售价
-              const saleAmount = isSale ? -item.saleAmount : item.saleAmount
-              // 收益
-              const investProfit = saleAmount - costAmount
+              const isInvestAccount = item.costCurrency && (item.currency !== item.costCurrency)
+              const isSale = Boolean(item.price)
+              let costAmount
+              let investProfit
+              if (isInvestAccount) {
+                costAmount = Decimal(item.costPrice).mul(Decimal(item.number).abs())
+                if (isSale) {
+                  investProfit = Decimal(item.price).sub(Decimal(item.costPrice)).mul(Decimal(item.number).abs())
+                }
+              }
               return (
                 <List.Item
                   actions={[
-                    item.amount ? AccountAmount(editAccount, item.amount, item.commoditySymbol, item.commodity) : ''
+                    item.number ? AccountAmount(editAccount, item.number, item.currencySymbol, item.currency) : ''
                   ]}
                 >
                   <List.Item.Meta
@@ -74,7 +77,7 @@ class AccountTransactionDrawer extends Component {
                     title={item.desc}
                     description={
                       <div>
-                        <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
+                        { item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div> }
                         <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
                         {
                           isInvestAccount &&
@@ -82,8 +85,8 @@ class AccountTransactionDrawer extends Component {
                             {
                               isSale ?
                                 <Fragment>
-                                  <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag>
-                                  <Tag>净值: {item.salePrice} / {AccountAmount(editAccount, saleAmount, item.saleCommoditySymbol)}</Tag>
+                                  <Tag>成本: {item.costPrice} ({item.costDate})</Tag>
+                                  <Tag>确认净值: {item.price}</Tag>
                                   {
                                     investProfit >= 0 ?
                                       <Fragment>
@@ -97,7 +100,8 @@ class AccountTransactionDrawer extends Component {
                                   }
                                 </Fragment> :
                                 <Fragment>
-                                  <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag>
+                                  <Tag>净值: {item.costPrice}</Tag>
+                                  {/* <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag> */}
                                 </Fragment>
                             }
                           </div>

@@ -203,7 +203,7 @@ class Account extends Component {
   }
 
   handleCloseBalanceDrawer = () => {
-    this.setState({ balanceDrawerVisible: false, balanceAccount: null })
+    this.setState({ balanceDrawerVisible: false, accountDrawerVisible: false, balanceAccount: null })
   }
 
   handleOpenSyncPriceDrawer = () => {
@@ -211,7 +211,7 @@ class Account extends Component {
   }
 
   handleCloseSyncPriceDrawer = () => {
-    this.setState({ syncPriceDrawerVisible: false, syncPriceAccount: null })
+    this.setState({ syncPriceDrawerVisible: false, accountDrawerVisible: false, syncPriceAccount: null })
   }
 
   handleOpenAccountDrawer = (account, editAccountDiffCommodity) => {
@@ -236,7 +236,7 @@ class Account extends Component {
   }
 
   handleCloseTransactionDrawer = () => {
-    this.setState({ transactionDrawerVisible: false, transactions: [] })
+    this.setState({ transactionDrawerVisible: false, accountDrawerVisible: false, transactions: [] })
   }
 
   render() {

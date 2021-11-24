@@ -4,6 +4,7 @@ import { Component, Fragment } from 'react';
 import { fetch, getAccountIcon } from '../config/Util';
 import AccountAmount from './AccountAmount';
 import AccountIcon from './AccountIcon';
+import Decimal from 'decimal.js';
 
 class TagTransactionDrawer extends Component {
 
@@ -81,19 +82,21 @@ class TagTransactionDrawer extends Component {
                           dataSource={item.childs}
                           renderItem={item => {
                             // 是否是投资账户
-                            const isInvestAccount = item.commodity !== item.costCommodity
-                            const isSale = Boolean(item.saleAmount)
-                            // 成本
-                            const costAmount = isSale ? -item.costAmount : item.costAmount
-                            // 售价
-                            const saleAmount = isSale ? -item.saleAmount : item.saleAmount
-                            // 收益
-                            const investProfit = saleAmount - costAmount
+                            const isInvestAccount = item.costCurrency && (item.currency !== item.costCurrency)
+                            const isSale = Boolean(item.price)
+                            let costAmount
+                            let investProfit
+                            if (isInvestAccount) {
+                              costAmount = Decimal(item.costPrice).mul(Decimal(item.number).abs())
+                              if (isSale) {
+                                investProfit = Decimal(item.price).sub(Decimal(item.costPrice)).mul(Decimal(item.number).abs())
+                              }
+                            }
                             return (
                               <List.Item
                                 style={{ marginLeft: '40px' }}
                                 actions={[
-                                  item.amount + ' ' + item.commodity
+                                  item.number + " " + item.currency
                                 ]}
                               >
                                 <List.Item.Meta
@@ -107,8 +110,8 @@ class TagTransactionDrawer extends Component {
                                           {
                                             isSale ?
                                               <Fragment>
-                                                <Tag>持仓: {item.costPrice} / {AccountAmount(item.account, costAmount, item.costCommoditySymbol)}</Tag>
-                                                <Tag>净值: {item.salePrice} / {AccountAmount(item.account, saleAmount, item.saleCommoditySymbol)}</Tag>
+                                                <Tag>成本: {item.costPrice} ({item.costDate})</Tag>
+                                                <Tag>确认净值: {item.price}</Tag>
                                                 {
                                                   investProfit >= 0 ?
                                                     <Fragment>
@@ -122,7 +125,7 @@ class TagTransactionDrawer extends Component {
                                                 }
                                               </Fragment> :
                                               <Fragment>
-                                                <Tag>持仓: {item.costPrice} / {AccountAmount(item.account, costAmount, item.costCommoditySymbol)}</Tag>
+                                                <Tag>净值: {item.costPrice}</Tag>
                                               </Fragment>
                                           }
                                         </div>

@@ -32,7 +32,7 @@ const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer
                 renderItem={item => (
                   <List.Item
                     actions={[
-                      item.amount ? <div>{AccountAmount(item.account, item.amount, item.commoditySymbol, item.commodity)}</div> : ''
+                      item.number ? <div>{AccountAmount(item.account, item.number, item.currencySymbol, item.currency)}</div> : ''
                     ]}
                   >
                     <List.Item.Meta
@@ -40,7 +40,9 @@ const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer
                       title={item.desc}
                       description={
                         <div>
-                          <div>{item.tags.map(t => <a style={{ marginRight: '4px' }} onClick={() => onOpenTagDrawer(t)}>#{t}</a>)}</div>
+                          {
+                            item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }} onClick={() => onOpenTagDrawer(t)}>#{t}</a>)}</div>
+                          }
                           {item.date}&nbsp;
                           <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { onOpenAccountDrawer(item.account) }}>{getAccountName(item.account)}</span>
                           &nbsp;{item.payee}
