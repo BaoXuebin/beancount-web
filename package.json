@@ -2,6 +2,7 @@
   "name": "beancount-web",
   "version": "1.0.0",
   "private": true,
+  "homepage": "/web",
   "proxy": "http://localhost:3001",
   "dependencies": {
     "@craco/craco": "^6.2.0",
