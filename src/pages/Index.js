@@ -88,7 +88,7 @@ class Index extends Component {
       this.props.history.replace('/ledger')
     } else {
       this.queryMonthStats();
-      this.queryEntryList();
+      this.queryTransactionList();
     }
   }
 
@@ -101,13 +101,13 @@ class Index extends Component {
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
   }
 
-  queryEntryList = () => {
+  queryTransactionList = () => {
     const { type, selectedMonth } = this.state
     const year = dayjs(selectedMonth).year()
     const month = dayjs(selectedMonth).month() + 1
 
     this.setState({ listLoading: true })
-    fetch(`/api/auth/entry?type=${type}&year=${year}&month=${month}`)
+    fetch(`/api/auth/transaction?type=${type}&year=${year}&month=${month}`)
       .then(transactionList => {
         const transactionDateGroup = {}
         transactionList.forEach(transaction => {
@@ -125,14 +125,14 @@ class Index extends Component {
 
   handleChangeEntryType = (type) => {
     this.setState({ type }, () => {
-      this.queryEntryList();
+      this.queryTransactionList();
     })
   }
 
   handleChangeMonth = (selectedMonth) => {
     this.setState({ selectedMonth }, () => {
       this.queryMonthStats();
-      this.queryEntryList();
+      this.queryTransactionList();
     })
   }
 
@@ -146,7 +146,7 @@ class Index extends Component {
 
   handleAddTransaction = () => {
     this.queryMonthStats()
-    this.queryEntryList()
+    this.queryTransactionList()
     this.handleCloseDrawer()
   }
 

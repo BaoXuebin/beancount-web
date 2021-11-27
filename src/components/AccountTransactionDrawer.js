@@ -1,10 +1,10 @@
 import { FallOutlined, RiseOutlined } from '@ant-design/icons';
 import { Drawer, List, Tag } from 'antd';
+import Decimal from 'decimal.js';
 import { Component, Fragment } from 'react';
 import { fetch, getAccountIcon } from '../config/Util';
 import AccountAmount from './AccountAmount';
 import AccountIcon from './AccountIcon';
-import Decimal from 'decimal.js';
 
 class AccountTransactionDrawer extends Component {
 

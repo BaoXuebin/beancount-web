@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "/web",
   "proxy": "http://localhost:3001",
+  "homepage": "web",
   "dependencies": {
     "@craco/craco": "^6.2.0",
     "antd": "^4.16.10",
