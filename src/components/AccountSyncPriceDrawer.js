@@ -1,12 +1,14 @@
 import { Button, Drawer, Form, Input } from 'antd';
 import dayjs from 'dayjs';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import { fetch } from '../config/Util';
 const validateMessages = {
   required: '${label} 不能为空！'
 };
 
 class AccountSyncPriceDrawer extends Component {
+
+  formRef = React.createRef();
 
   state = {
     transactions: [],
@@ -15,11 +17,13 @@ class AccountSyncPriceDrawer extends Component {
 
   handleSyncPriceAccount = (formValue) => {
     const editAccount = this.props.account;
+    console.log(editAccount)
     if (!editAccount) return;
     this.setState({ loading: true })
-    fetch(`/api/auth/commodity/price?commodity=${editAccount.commodity}&date=${formValue.date}&price=${formValue.price}`, { method: 'POST' })
+    fetch('/api/auth/commodity/price', { method: 'POST', body: { commodity: editAccount.currency, ...formValue } })
       .then(() => {
         this.props.onClose();
+        this.formRef.current.resetFields();
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
   }
 
@@ -44,7 +48,7 @@ class AccountSyncPriceDrawer extends Component {
             className="page-form"
             size="large"
             style={{ textAlign: 'left' }}
-            ref={this.balanceFormRef}
+            ref={this.formRef}
             onFinish={this.handleSyncPriceAccount}
             validateMessages={validateMessages}
           >
@@ -55,7 +59,7 @@ class AccountSyncPriceDrawer extends Component {
               name="price"
               rules={[{ required: true }]}
             >
-              <Input type="number" addonBefore={`1 ${editAccount.commodity}≈`} addonAfter={editAccount.priceCommodity} placeholder="净值/汇率" />
+              <Input type="number" addonBefore={`1 ${editAccount.currency}≈`} addonAfter={editAccount.marketCurrency} placeholder="净值/汇率" />
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} className="submit-button">

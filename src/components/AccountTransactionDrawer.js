@@ -20,7 +20,7 @@ class AccountTransactionDrawer extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.account !== nextProps.account) {
+    if (nextProps.visible) {
       this.handleQueryAccountTransaction(nextProps.account)
     }
   }

@@ -36,7 +36,7 @@ const AccountList = ({ loading, accounts, onEdit }) => {
     <Collapse ghost>
       {
         Object.values(groupByAccountsDict).map(groupByAccount => {
-          const totalAmount = groupByAccount.children.map(acc => Decimal(acc.priceAmount || 0)).reduce((a, b) => a.plus(b))
+          const totalAmount = groupByAccount.children.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
           return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (￥${Math.abs(totalAmount)})`}>
             <List
               loading={loading}
@@ -44,13 +44,13 @@ const AccountList = ({ loading, accounts, onEdit }) => {
               dataSource={groupByAccount.children}
               renderItem={item => {
                 const actions = []
-                if (item.priceAmount) {
-                  actions.push(<div>{AccountAmount(item.account, item.priceAmount, item.priceCommoditySymbol)}</div>)
+                if (item.marketNumber) {
+                  actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
                 }
                 if (item.loading) {
                   actions.push(<LoadingOutlined />)
                 } else {
-                  actions.push(<a key="list-delete" onClick={() => { onEdit(item, !item.priceCommodity || (item.commodity === item.priceCommodity)) }}>操作</a>)
+                  actions.push(<a key="list-delete" onClick={() => { onEdit(item, !item.marketCurrency || (item.marketCurrency && (item.currency === item.marketCurrency))) }}>操作</a>)
                 }
                 return (
                   <List.Item
@@ -59,7 +59,7 @@ const AccountList = ({ loading, accounts, onEdit }) => {
                     <List.Item.Meta
                       avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
                       title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
-                      description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.commodity || ''}`}
+                      description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.currency || ''}`}
                     />
                   </List.Item>
                 )
@@ -129,10 +129,10 @@ class Account extends Component {
 
   handleAddAccount = (values) => {
     this.setState({ loading: true })
-    const { account, date, accountType, accountTypeName, commodity } = values
+    const { account, date, accountType, accountTypeName, currency } = values
     if (this.state.selectedAccountType === 'Undefined') {
       const type = `${this.state.selectedAccountTypePrefix}:${accountType}`
-      fetch(`/api/auth/account/type?type=${type}&name=${accountTypeName}`, { method: 'POST' })
+      fetch('/api/auth/account/type', { method: 'POST', body: { type, name: accountTypeName } })
         .then(result => {
           this.setState({ drawerVisible: false, accountTypes: [result, ...this.state.accountTypes] });
           // 清空表单内容
@@ -141,7 +141,7 @@ class Account extends Component {
         }).catch(console.error).finally(() => { this.setState({ loading: false }) })
     } else {
       const acc = `${this.state.selectedAccountType}:${account}`
-      fetch(`/api/auth/account?account=${acc}&date=${date}&commodity=${commodity}`, { method: 'POST' })
+      fetch('/api/auth/account', { method: 'POST', body: {account: acc, date, currency} })
         .then(result => {
           this.setState({ drawerVisible: false, accounts: [result, ...this.state.accounts] });
           // 清空表单内容
@@ -156,7 +156,7 @@ class Account extends Component {
     const accounts = this.state.accounts.map(acc => acc.account === account ? Object.assign({ loading: true }, acc) : acc)
     this.setState({ accounts })
     const date = dayjs().format('YYYY-MM-DD')
-    fetch(`/api/auth/account/close?account=${account}&date=${date}`, { method: 'POST' })
+    fetch(`/api/auth/account/close`, { method: 'POST', body: { account, date } })
       .then(res => {
         const accounts = this.state.accounts.filter(acc => acc.account !== account)
         this.setState({ accounts })
@@ -166,20 +166,21 @@ class Account extends Component {
 
   handleBalanceAccount = (values) => {
     this.setState({ loading: true })
-
     const account = this.state.balanceAccount
-    const amount = values.amount
-    fetch(`/api/auth/account/balance?account=${account}&amount=${amount}`, { method: 'POST' })
-      .then(() => {
+    fetch(`/api/auth/account/balance`, { method: 'POST', body: { ...values, account } })
+      .then((res) => {
         const accounts = this.state.accounts.map(acc => {
-          if (acc.account === account) {
-            acc.amount = amount
+          if (acc.account === res.account) {
+            acc.marketNumber = res.marketNumber
+            acc.marketCurrency = res.marketCurrency
+            acc.marketCurrencySymbol = res.marketCurrencySymbol
             return acc
           }
           return acc
         })
-        this.setState({ accounts, balanceDrawerVisible: false })
-        this.formRef.current.resetFields();
+        this.setState({ accounts })
+        this.handleCloseBalanceDrawer()
+        this.balanceFormRef.current.resetFields();
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
   }
 
@@ -199,7 +200,9 @@ class Account extends Component {
   }
 
   handleOpenBalanceDrawer = () => {
-    this.setState({ balanceDrawerVisible: true, balanceAccount: this.state.editAccount.account })
+    this.setState({ balanceDrawerVisible: true, balanceAccount: this.state.editAccount.account }, () => {
+      this.balanceFormRef.current.setFieldsValue({ date: dayjs().format('YYYY-MM-DD') })
+    })
   }
 
   handleCloseBalanceDrawer = () => {
@@ -277,16 +280,16 @@ class Account extends Component {
           >
             <Form.Item
               name="type"
-              label=" 类型"
+              label=" 分类"
               rules={[{ required: true }]}
             >
               <Select
                 showSearch
-                placeholder="类型"
+                placeholder="分类"
                 optionFilterProp="children"
                 onChange={this.handleChangeAccountType}
               >
-                <Option value="Undefined">+ 新增账户类型</Option>
+                <Option value="Undefined">+ 新增账户分类</Option>
                 {
                   accountTypes.map(acc => <Option key={acc.key} value={acc.key}>{`${acc.key.slice(0, acc.key.indexOf(":"))}:${acc.name}`}</Option>)
                 }
@@ -296,10 +299,10 @@ class Account extends Component {
               selectedAccountType === 'Undefined' ?
                 <Form.Item
                   name="accountTypeName"
-                  label="类型名称"
+                  label="分类名称"
                   rules={[{ required: true }]}
                 >
-                  <Input placeholder="账户类型的名称，用以账户分类，如购物" />
+                  <Input placeholder="账户分类的名称，如购物，美食，订阅" />
                 </Form.Item> :
                 <Form.Item name="date" label="日期" rules={[{ required: true }]}>
                   <Input type="date" placeholder="时间" />
@@ -309,7 +312,7 @@ class Account extends Component {
               selectedAccountType === 'Undefined' ?
                 <Form.Item
                   name="accountType"
-                  label="账户类型"
+                  label="账户分类"
                   rules={[{ required: true }]}
                 >
                   <Input
@@ -322,7 +325,7 @@ class Account extends Component {
                         <Option value="Equity">权益</Option>
                       </Select>
                     }
-                    placeholder="账户类型，如 Shopping"
+                    placeholder="账户分类，如 Shopping"
                   />
                 </Form.Item> :
                 <Form.Item
@@ -340,7 +343,7 @@ class Account extends Component {
             {
               selectedAccountType !== 'Undefined' &&
               <Form.Item
-                name="commodity"
+                name="currency"
                 label="币种"
                 rules={[{ required: true }]}
                 initialValue={this.props.commodity.val}
@@ -394,11 +397,11 @@ class Account extends Component {
               onFinish={this.handleBalanceAccount}
               validateMessages={validateMessages}
             >
-              <Form.Item
-                name="amount"
-                rules={[{ required: true }]}
-              >
-                <Input type="number" placeholder="今日结束的金额" />
+              <Form.Item name="date" rules={[{ required: true }]}>
+                  <Input type="date" placeholder="时间" />
+                </Form.Item>
+              <Form.Item name="number" rules={[{ required: true }]}>
+                <Input type="number" placeholder="金额" addonAfter={this.state.editAccount.currency} />
               </Form.Item>
               <Form.Item>
                 <Alert type="info" message="核算账户前，请确保 Equity:OpeningBalances 账户存在" showIcon />

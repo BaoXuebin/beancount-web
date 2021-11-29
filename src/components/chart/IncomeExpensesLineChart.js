@@ -16,7 +16,7 @@ class IncomeExpensesLineChart extends Component {
 
   queryMonthIncomeExpenses = () => {
     this.setState({ loading: true })
-    fetch('/api/auth/stats/month/incomeExpenses')
+    fetch('/api/auth/stats/month/total')
       .then(incomeExpenses => {
         this.setState({ incomeExpenses })
       }).finally(() => { this.setState({ loading: false }) })

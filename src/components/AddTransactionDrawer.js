@@ -58,7 +58,7 @@ class AddTransactionDrawer extends Component {
   }
 
   queryLatest100Payees = () => {
-    fetch('/api/auth/payee')
+    fetch('/api/auth/transaction/payee')
       .then(payees => {
         this.setState({ payees, autoCompletePayees: payees.slice(0, Math.max(payees.length, 10)) })
       }).catch(console.error)
@@ -115,14 +115,14 @@ class AddTransactionDrawer extends Component {
   getAccountCommodity = (account) => {
     const arr = this.state.accounts.filter(acc => acc.account === account)[0]
     if (arr) {
-      return arr.commodity
+      return arr.currency
     }
     return ''
   }
 
   handleSubmit = (values) => {
     this.setState({ loading: true })
-    fetch('/api/auth/entry', { method: 'POST', body: values })
+    fetch('/api/auth/transaction', { method: 'POST', body: values })
       .then(res => {
         message.success('添加成功')
         this.formRef.current.resetFields()
@@ -269,8 +269,8 @@ class AddTransactionDrawer extends Component {
                             <Fragment>
                               <Form.Item
                                 hidden
-                                name={[field.name, 'priceCommodity']}
-                                fieldKey={[field.fieldKey, 'priceCommodity']}
+                                name={[field.name, 'priceCurrency']}
+                                fieldKey={[field.fieldKey, 'priceCurrency']}
                               >
                                 <Input />
                               </Form.Item>
@@ -284,15 +284,15 @@ class AddTransactionDrawer extends Component {
                           }
                           <Form.Item
                             hidden
-                            name={[field.name, 'commodity']}
-                            fieldKey={[field.fieldKey, 'commodity']}
+                            name={[field.name, 'currency']}
+                            fieldKey={[field.fieldKey, 'currency']}
                           >
                             <Input />
                           </Form.Item>
                           <div style={{ display: 'flex' }}>
                             <Form.Item
-                              name={[field.name, 'amount']}
-                              fieldKey={[field.fieldKey, 'amount']}
+                              name={[field.name, 'number']}
+                              fieldKey={[field.fieldKey, 'number']}
                               rules={[{ required: true, message: '金额' }]}
                               style={{ flex: 1 }}
                             >

@@ -60,8 +60,10 @@ export const fetch = (url, { method, headers, body } = {}) => {
             message.error("无效命令")
           } else if (code === 1006) {
             message.error("密码错误")
+          } else if (code === 1007) {
+            message.error("账户已存在")
           } else if (code === 1010) {
-            window.location.href = '/#/ledger';
+            window.location.href = '/web/#/ledger';
           } else {
             message.error('请求失败，请刷新页面重试');
           }
