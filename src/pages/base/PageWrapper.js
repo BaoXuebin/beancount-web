@@ -39,6 +39,9 @@ class PageWrapper extends Component {
           <footer className="footer">
             <div className="copyright">
               © 2021&nbsp;&nbsp;
+              {Config.version}&nbsp;&nbsp;
+              <a href={Config.guide} target="_blank">使用文档</a>&nbsp;&nbsp;
+              <a href={Config.issue} target="_blank">反馈BUG</a>&nbsp;&nbsp;
             </div>
           </footer>
         </div>
