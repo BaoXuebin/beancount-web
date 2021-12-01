@@ -7,6 +7,7 @@ import './styles/PageWrapper.css';
 class PageWrapper extends Component {
   render() {
     let { theme } = this.context;
+    const title = window.localStorage.getItem('ledgerTitle') || Config.title
     return (
       <div className={`${theme}-theme`}>
         <div className="wrapper">
@@ -15,7 +16,7 @@ class PageWrapper extends Component {
               <div className="container">
                 <div className="navbar-header header-logo" to="/">
                   {/* <img src={LogoImage} width="16" height="16" /> */}
-                  <Link to="/">{Config.title}</Link>
+                  <Link to="/">{title}</Link>
                 </div>
                 <div className="menu navbar-right">
                   <Link to="/account">账户</Link>

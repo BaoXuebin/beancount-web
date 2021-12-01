@@ -85,7 +85,7 @@ class AccountDayTrendChart extends Component {
             <Interval position="date*amount" />
             <Tooltip>
               {(title, items) => {
-                return <div style={{ padding: '.8rem 1rem' }}>{title}: ￥{items[0].data.amount}</div>
+                return <div style={{ padding: '.8rem 1rem' }}>{title}: {items[0].data.amount}元</div>
               }}
             </Tooltip>
           </Chart>

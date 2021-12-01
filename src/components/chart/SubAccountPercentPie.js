@@ -109,7 +109,7 @@ class SubAccountPercentPie extends Component {
             <Coordinate type="theta" radius={0.75} />
             <Tooltip>
               {(title, items) => {
-                return <div style={{ padding: '.8rem 1rem' }}>{title}: ￥{items[0].data.count}</div>
+                return <div style={{ padding: '.8rem 1rem' }}>{title}: {items[0].data.count}元</div>
               }}
             </Tooltip>
             <Axis visible={false} />

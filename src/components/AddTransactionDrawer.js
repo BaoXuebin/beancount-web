@@ -106,8 +106,8 @@ class AddTransactionDrawer extends Component {
     const accountCommodity = this.getAccountCommodity(account)
     // 账户货币单位不同，需要指定汇率
     entries[idx].commodity = accountCommodity
-    if (accountCommodity !== this.props.commodity.val) {
-      entries[idx].priceCommodity = this.props.commodity.val
+    if (accountCommodity !== this.props.commodity.currency) {
+      entries[idx].priceCommodity = this.props.commodity.currency
     }
     this.formRef.current.setFieldsValue({ entries })
   }
@@ -265,7 +265,7 @@ class AddTransactionDrawer extends Component {
                             </Select>
                           </Form.Item>
                           {
-                            (accountCommodity && accountCommodity !== this.props.commodity.val) &&
+                            (accountCommodity && accountCommodity !== this.props.commodity.currency) &&
                             <Fragment>
                               <Form.Item
                                 hidden
@@ -278,7 +278,7 @@ class AddTransactionDrawer extends Component {
                                 name={[field.name, 'price']}
                                 fieldKey={[field.fieldKey, 'price']}
                               >
-                                <Input type="number" addonBefore={`1 ${accountCommodity}≈`} addonAfter={this.props.commodity.val} placeholder={'汇率/净值（选填）'} onChange={this.handleChangeAmount} />
+                                <Input type="number" addonBefore={`1 ${accountCommodity}≈`} addonAfter={this.props.commodity.currency} placeholder={'汇率/净值（选填）'} onChange={this.handleChangeAmount} />
                               </Form.Item>
                             </Fragment>
                           }
