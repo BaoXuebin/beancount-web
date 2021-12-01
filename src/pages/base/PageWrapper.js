@@ -25,7 +25,7 @@ class PageWrapper extends Component {
                   {/* <Link to="/about">关于</Link> */}
                   {/* <ThemeToggle /> */}
                   <a href={Config.github}>
-                    <img src="https://img.shields.io/github/stars/BaoXuebin/beancount-node-server?style=social" />
+                    <img src="https://img.shields.io/github/stars/BaoXuebin/beancount-gs?style=social" />
                   </a>
                 </div>
               </div>
