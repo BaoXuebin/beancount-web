@@ -1,6 +1,7 @@
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Col, Row, Tabs } from 'antd';
 import React, { Component } from 'react';
+import AccountBalanceChart from '../../components/chart/AccountBalanceChart';
 import AccountDayTrendChart from '../../components/chart/AccountDayTrendChart';
 import IncomeExpensesLineChart from '../../components/chart/IncomeExpensesLineChart';
 import PayeeChart from '../../components/chart/PayeeChart';
@@ -17,6 +18,7 @@ class Stats extends Component {
   timeoutEvent = null
 
   state = {
+    statsTab: localStorage.getItem("statsTabIndx") || '1',
     loading: false,
     chartLoading: false,
     Assets: 0,
@@ -45,11 +47,13 @@ class Stats extends Component {
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
   }
 
-  handleChnageTab = () => {
+  handleChnageTab = (statsTab) => {
     if (this.timeoutEvent) {
       clearTimeout(this.timeoutEvent)
     }
-    this.setState({ chartLoading: true })
+    this.setState({ chartLoading: true, statsTab }, () => {
+      localStorage.setItem("statsTabIndx", statsTab)
+    })
     this.timeoutEvent = setTimeout(() => {
       this.setState({ chartLoading: false })
     }, 300)
@@ -66,7 +70,7 @@ class Stats extends Component {
       this.theme = this.context.theme
     }
 
-    const { loading, hideMoney } = this.state
+    const { loading, hideMoney, statsTab } = this.state
 
     return (
       <div className="stats-page">
@@ -96,17 +100,20 @@ class Stats extends Component {
             </Col>
           </Row>
         </div>
-        <Tabs defaultActiveKey="1" centered style={{ marginTop: '2rem' }} onChange={this.handleChnageTab}>
+        <Tabs defaultActiveKey="1" activeKey={statsTab} centered style={{ marginTop: '2rem' }} onChange={this.handleChnageTab}>
           <Tabs.TabPane tab="月度收支统计图" key="1">
             <IncomeExpensesLineChart chartLoading={this.state.chartLoading} />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="账户分布占比" key="2">
-            <SubAccountPercentPie chartLoading={this.state.chartLoading} />
+          <Tabs.TabPane tab="资产负债统计" key="2">
+            <AccountBalanceChart chartLoading={this.state.chartLoading} />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="账户日趋势" key="3">
+          <Tabs.TabPane tab="损益账户统计" key="3">
             <AccountDayTrendChart chartLoading={this.state.chartLoading} />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="商户消费排行" key="4">
+          <Tabs.TabPane tab="账户分布占比" key="4">
+            <SubAccountPercentPie chartLoading={this.state.chartLoading} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="商户消费排行" key="5">
             <PayeeChart chartLoading={this.state.chartLoading} />
           </Tabs.TabPane>
         </Tabs>

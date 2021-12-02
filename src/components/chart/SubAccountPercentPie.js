@@ -2,7 +2,7 @@ import { Input, Select, Spin } from 'antd';
 import { Axis, Chart, Coordinate, Interaction, Interval, Tooltip } from "bizcharts";
 import Decimal from 'decimal.js';
 import React, { Component } from "react";
-import { fetch, getCurrentMonth } from '../../config/Util';
+import { fetch } from '../../config/Util';
 import MonthSelector from '../MonthSelector';
 
 
@@ -13,7 +13,7 @@ class SubAccountPercentPie extends Component {
     subAccountPercentData: [],
     level: '1',
     accountPrefix: 'Expenses',
-    selectedMonth: getCurrentMonth()
+    selectedMonth: ""
   }
 
   componentDidMount() {

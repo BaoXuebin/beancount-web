@@ -103,11 +103,8 @@ class Index extends Component {
 
   queryTransactionList = () => {
     const { type, selectedMonth } = this.state
-    const year = dayjs(selectedMonth).year()
-    const month = dayjs(selectedMonth).month() + 1
-
     this.setState({ listLoading: true })
-    fetch(`/api/auth/transaction?type=${type}&year=${year}&month=${month}`)
+    fetch(`/api/auth/transaction?type=${type}&year=${dayjs(selectedMonth).year()}&month=${dayjs(selectedMonth).month() + 1}`)
       .then(transactionList => {
         const transactionDateGroup = {}
         transactionList.forEach(transaction => {

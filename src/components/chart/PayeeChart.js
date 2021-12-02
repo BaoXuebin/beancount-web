@@ -1,7 +1,7 @@
 import { Input, Select, Spin } from 'antd';
 import { Chart, Coordinate, Interaction, Interval } from "bizcharts";
 import React, { Component } from "react";
-import { fetch, getCurrentMonth } from '../../config/Util';
+import { fetch } from '../../config/Util';
 import MonthSelector from '../MonthSelector';
 
 class PayeeChart extends Component {
@@ -11,7 +11,7 @@ class PayeeChart extends Component {
     payee: [],
     type: 'cot',
     accountPrefix: 'Expenses',
-    selectedMonth: getCurrentMonth()
+    selectedMonth: ""
   }
 
   componentDidMount() {

@@ -1,28 +1,27 @@
-import { Input, Select, Spin } from 'antd';
-import { Chart, Interval, Tooltip } from "bizcharts";
+import { Input, Spin } from 'antd';
+import { Chart, Line, Point, Tooltip } from "bizcharts";
+import moment from 'moment';
 import React, { Component } from "react";
 import { fetch } from '../../config/Util';
 import MonthSelector from '../MonthSelector';
 
-
-class AccountDayTrendChart extends Component {
+class AccountBalanceChart extends Component {
 
   state = {
     loading: false,
-    dayAmountData: [],
-    type: 'avg',
-    accountPrefix: 'Expenses',
+    balanceData: [],
+    accountPrefix: 'Assets',
     selectedMonth: ""
   }
 
   componentDidMount() {
-    this.queryAccountDayTrend()
+    this.queryAccountBalance()
   }
 
-  queryAccountDayTrend = () => {
+  queryAccountBalance = () => {
     this.setState({ loading: true })
     let year, month;
-    const { accountPrefix, selectedMonth, type } = this.state;
+    const { accountPrefix, selectedMonth } = this.state;
     if (selectedMonth) {
       const yearAndMonth = selectedMonth.split('-').filter(a => a)
       if (yearAndMonth.length === 1) {
@@ -32,9 +31,24 @@ class AccountDayTrendChart extends Component {
         month = yearAndMonth[1]
       }
     }
-    fetch(`/api/auth/stats/account/trend?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}&type=${type}`)
-      .then(dayAmountData => {
-        this.setState({ dayAmountData })
+    let startDate, endDate
+    if (year && month) {
+      startDate = moment(year + "-" + month).startOf("month")
+      endDate = moment(year + "-" + month).endOf("month")
+    } else if (year) {
+      startDate = moment(year).startOf("year")
+      endDate = moment(year).endOf("year")
+    }
+    fetch(`/api/auth/stats/account/balance?prefix=${accountPrefix}`)
+      .then(balanceData => {
+        let data = balanceData
+        if (startDate && endDate) {
+          data = balanceData.filter(d => {
+            const date = moment(d.date)
+            return date.isAfter(startDate) && date.isBefore(endDate)
+          })
+        }
+        this.setState({ balanceData: data })
       }).finally(() => { this.setState({ loading: false }) })
   }
 
@@ -42,20 +56,14 @@ class AccountDayTrendChart extends Component {
     if (e.key === 'Enter') {
       const accountPrefix = this.accountInput.input.value.trim()
       this.setState({ accountPrefix }, () => {
-        this.queryAccountDayTrend()
+        this.queryAccountBalance()
       })
     }
   }
 
-  handleChangeStatsType = (type) => {
-    this.setState({ type }, () => {
-      this.queryAccountDayTrend()
-    })
-  }
-
   handleChangeMonth = (selectedMonth) => {
     this.setState({ selectedMonth }, () => {
-      this.queryAccountDayTrend()
+      this.queryAccountBalance()
     })
   }
 
@@ -73,21 +81,19 @@ class AccountDayTrendChart extends Component {
           placeholder="输入账户"
           style={{ width: '240px' }}
           onKeyPress={this.handleEnter}
-          addonAfter={
-            <Select value={this.state.type} onChange={this.handleChangeStatsType}>
-              <Select.Option value="avg">每天</Select.Option>
-              <Select.Option value="sum">累计</Select.Option>
-            </Select>
-          }
         />
         <Spin spinning={this.state.loading}>
-          <Chart height={480} autoFit data={this.state.dayAmountData} interactions={['active-region']} padding={[30, 30, 30, 50]} >
-            <Interval position="date*amount" />
-            <Tooltip>
-              {(title, items) => {
-                return <div style={{ padding: '.8rem 1rem' }}>{title}: ￥{items[0].data.amount}</div>
-              }}
-            </Tooltip>
+          <Chart
+            appendPadding={[10, 0, 0, 10]}
+            autoFit
+            height={500}
+            data={this.state.balanceData}
+            scale={{ amount: { alias: '合计', type: 'linear-strict' }, year: { range: [0, 1] } }}
+          >
+
+            <Line position="date*amount" />
+            <Point position="date*amount" />
+            <Tooltip showCrosshairs follow={false} />
           </Chart>
         </Spin>
       </div>
@@ -95,4 +101,4 @@ class AccountDayTrendChart extends Component {
   }
 }
 
-export default AccountDayTrendChart
+export default AccountBalanceChart
