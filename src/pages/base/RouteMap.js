@@ -22,6 +22,7 @@ const RouteMap = () => (
       <Route exact path="/about" component={About} />
       <Route exact path="/edit" component={Edit} />
       <Route exact path="/stats" component={Stats} />
+      <Route component={Index} />
     </Switch>
   </React.Fragment>
 );

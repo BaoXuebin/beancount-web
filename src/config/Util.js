@@ -10,14 +10,7 @@ export const getAccountCata = account => {
   return ''
 }
 export const getAccountIcon = account => {
-  const array = account.split(':').reverse()
-  for (let i = 0; i < array.length; i++) {
-    const type = array[i]
-    if (new RegExp('^[a-zA-Z]').test(type)) {
-      return type
-    }
-  }
-  return ''
+  return account.split(':').join('_')
 }
 export const getAccountName = account => {
   const array = account.split(':')
@@ -63,6 +56,8 @@ export const fetch = (url, { method, headers, body } = {}) => {
           } else if (code === 1007) {
             message.error("账户已存在")
           } else if (code === 1010) {
+            window.location.href = '/web/#/ledger';
+          } else if (code === 401) {
             window.location.href = '/web/#/ledger';
           } else {
             message.error('请求失败，请刷新页面重试');

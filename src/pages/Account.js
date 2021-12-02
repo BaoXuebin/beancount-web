@@ -20,7 +20,7 @@ const validateMessages = {
   required: '${label} 不能为空！'
 };
 
-const AccountList = ({ loading, accounts, onEdit }) => {
+const AccountList = ({ loading, accounts, onEdit, commodity }) => {
   const groupByAccountsDict = {}
   accounts.forEach(acc => {
     const typeKey = acc.type.key;
@@ -37,7 +37,7 @@ const AccountList = ({ loading, accounts, onEdit }) => {
       {
         Object.values(groupByAccountsDict).map(groupByAccount => {
           const totalAmount = groupByAccount.children.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
-          return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (￥${Math.abs(totalAmount)})`}>
+          return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (${commodity.symbol}${Math.abs(totalAmount)})`}>
             <List
               loading={loading}
               itemLayout="horizontal"
@@ -247,7 +247,7 @@ class Account extends Component {
       this.theme = this.context.theme
     }
     const { accounts, loading, drawerVisible, balanceDrawerVisible, accountTypes, iconType, selectedAccountType,
-      selectedAccountTypePrefix, accountDrawerVisible, editAccount, transactionDrawerVisible, syncPriceDrawerVisible, syncPriceAccount } = this.state
+      selectedAccountTypePrefix, accountDrawerVisible, editAccount, transactionDrawerVisible, syncPriceDrawerVisible } = this.state
 
     return (
       <div className="account-page">
@@ -346,7 +346,7 @@ class Account extends Component {
                 name="currency"
                 label="币种"
                 rules={[{ required: true }]}
-                initialValue={this.props.commodity.val}
+                initialValue={this.props.commodity.currency}
               >
                 <Input placeholder="账户使用的货币单位" />
               </Form.Item>
@@ -361,19 +361,19 @@ class Account extends Component {
         <div>
           <Tabs defaultActiveKey="Assets">
             <TabPane tab="资产账户" key="1">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="收入账户" key="Income">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="支出账户" key="Expenses">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="负债账户" key="Liabilities">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
             <TabPane tab="权益账户" key="Equity">
-              <AccountList loading={loading} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} />
             </TabPane>
           </Tabs>
         </div>
