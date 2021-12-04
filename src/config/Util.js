@@ -55,6 +55,8 @@ export const fetch = (url, { method, headers, body } = {}) => {
             message.error("密码错误")
           } else if (code === 1007) {
             message.error("账户已存在")
+          }  else if (code === 1008) {
+            message.error("密钥不匹配")
           } else if (code === 1010) {
             window.location.href = '/web/#/ledger';
           } else if (code === 401) {

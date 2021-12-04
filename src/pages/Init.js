@@ -102,6 +102,9 @@ class Init extends Component {
               <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" initialValue={this.state.config.isBak}>
                 <Switch />
               </Form.Item>
+              <Form.Item label="密钥" name="secret" rules={[{ required: true }]}>
+                <Input placeholder="密钥" />
+              </Form.Item>
               <Form.Item>
                 <Button block type="primary" htmlType="submit" loading={this.state.loading} className="submit-button">
                   确认
