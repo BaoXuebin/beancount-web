@@ -1,10 +1,9 @@
-import { Button, Form, Input, Switch } from 'antd';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { BookOutlined, CalendarOutlined, DownOutlined, PlusOutlined, UpOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Switch } from 'antd';
 import React, { Component, Fragment } from 'react';
+import { fetch } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
-import { fetch } from '../config/Util';
-import Config from '../config/Config';
 
 const validateMessages = {
   required: '${label} 不能为空！'
@@ -18,11 +17,23 @@ class Ledger extends Component {
   state = {
     loading: false,
     expand: false,
+    newLedger: false,
+    selectedLedger: {},
+    ledgers: [],
     config: {}
   }
 
   componentDidMount() {
     this.handleQueryServerConfig()
+    this.handleQueryLedgerList()
+  }
+
+  handleQueryLedgerList = () => {
+    this.setState({ loading: true })
+    fetch('/api/ledger', { method: "GET" })
+      .then(ledgers => {
+        this.setState({ ledgers, newLedger: ledgers.length == 0 })
+      }).finally(() => { this.setState({ loading: false }) })
   }
 
   handleQueryServerConfig = () => {
@@ -31,7 +42,7 @@ class Ledger extends Component {
       .then(config => {
         if (!config.dataPath) {
           window.location.href = '/web/#/init';
-          return  
+          return
         }
         this.setState({ config })
       }).finally(() => { this.setState({ loading: false }) })
@@ -52,9 +63,51 @@ class Ledger extends Component {
       }).finally(() => { this.setState({ loading: false }) })
   }
 
+  handleSelectLedger = (selectedLedger) => {
+    this.setState({ selectedLedger })
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
+    }
+
+    if (!this.state.selectedLedger.mail && !this.state.newLedger) {
+      return (
+        <div className="ledger-page">
+          <div>
+            <Button block type="dashed" icon={<PlusOutlined />} onClick={() => { this.setState({ newLedger: true }) }}>
+              创建新账本
+            </Button>
+          </div>
+          {
+            this.state.ledgers.map(ledger => (
+              <Card style={{ width: '100%', marginTop: 16, cursor: 'pointer' }} loading={this.state.loading}>
+                <Card.Meta
+                  onClick={() => { this.handleSelectLedger(ledger); }}
+                  // avatar={
+                  //   <Avatar style={{ color: 'white', backgroundColor: '#1DA57A' }}>{ledger.mail.split("")[0]}</Avatar>
+                  // }
+                  title={ledger.title}
+                  description={
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div>
+                        <span><BookOutlined />&nbsp;{ledger.mail}</span>&nbsp;&nbsp;
+                        {
+                          ledger.createDate && <span><CalendarOutlined />&nbsp;{ledger.createDate}</span>
+                        }
+                      </div>
+                      <div>
+                        <span>{ledger.operatingCurrency}</span>
+                      </div>
+                    </div>
+                  }
+                />
+              </Card>
+            ))
+          }
+        </div>
+      )
     }
 
     return (
@@ -69,36 +122,41 @@ class Ledger extends Component {
             validateMessages={validateMessages}
             loading={this.state.loading}
           >
-            <Form.Item name="ledgerName" label="账本名称" rules={[{ required: true }]}>
+            <Form.Item name="ledgerName" label="账本名称" initialValue={this.state.selectedLedger.mail || ""} rules={[{ required: true }]}>
               <Input placeholder="你可以创建多个的账本，账本之间的数据无法互通" />
             </Form.Item>
             <Form.Item name="secret" label="账本密码">
               <Input type="password" placeholder="账本密码" />
             </Form.Item>
-            <div style={{ fontSize: 14, marginBottom: '2rem', textAlign: 'center' }}>
-              <a
-                onClick={() => {
-                  this.setState({ expand: !this.state.expand })
-                }}
-              >
-                {this.state.expand ? <UpOutlined /> : <DownOutlined />} 更多账本设置
-              </a>
-            </div>
             {
-              this.state.expand &&
+              !this.state.selectedLedger &&
               <Fragment>
-                <Form.Item label="初始化日期" name="startDate" initialValue={this.state.config.startDate} rules={[{ required: true }]}>
-                  <Input type="date" placeholder="初始化日期" />
-                </Form.Item>
-                <Form.Item label="本币位" name="operatingCurrency" initialValue={this.state.config.operatingCurrency} rules={[{ required: true }]}>
-                  <Input placeholder="本币位" />
-                </Form.Item>
-                <Form.Item label="平衡账户" name="openingBalances" initialValue={this.state.config.openingBalances} rules={[{ required: true }]}>
-                  <Input placeholder="平衡账户" />
-                </Form.Item>
-                <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" initialValue={this.state.config.isBak}>
-                  <Switch />
-                </Form.Item>
+                <div style={{ fontSize: 14, marginBottom: '2rem', textAlign: 'center' }}>
+                  <a
+                    onClick={() => {
+                      this.setState({ expand: !this.state.expand })
+                    }}
+                  >
+                    {this.state.expand ? <UpOutlined /> : <DownOutlined />} 更多账本设置
+                  </a>
+                </div>
+                {
+                  this.state.expand &&
+                  <Fragment>
+                    <Form.Item label="初始化日期" name="startDate" initialValue={this.state.config.startDate} rules={[{ required: true }]}>
+                      <Input type="date" placeholder="初始化日期" />
+                    </Form.Item>
+                    <Form.Item label="本币位" name="operatingCurrency" initialValue={this.state.config.operatingCurrency} rules={[{ required: true }]}>
+                      <Input placeholder="本币位" />
+                    </Form.Item>
+                    <Form.Item label="平衡账户" name="openingBalances" initialValue={this.state.config.openingBalances} rules={[{ required: true }]}>
+                      <Input placeholder="平衡账户" />
+                    </Form.Item>
+                    <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" initialValue={this.state.config.isBak}>
+                      <Switch />
+                    </Form.Item>
+                  </Fragment>
+                }
               </Fragment>
             }
             <Form.Item>
@@ -106,6 +164,14 @@ class Ledger extends Component {
                 创建/进入个人账本
               </Button>
             </Form.Item>
+            {
+              this.state.ledgers.length > 0 &&
+              <Form.Item>
+                <Button block onClick={() => { this.setState({ selectedLedger: {}, newLedger: false }) }}>
+                  返回账本
+                </Button>
+              </Form.Item>
+            }
           </Form>
         </div>
       </div>

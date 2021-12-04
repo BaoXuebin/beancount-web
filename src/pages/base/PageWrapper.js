@@ -5,6 +5,12 @@ import ThemeContext from '../../context/ThemeContext';
 import './styles/PageWrapper.css';
 
 class PageWrapper extends Component {
+
+  handleOut = () => {
+    localStorage.clear()
+    window.location.href = "/web/#/ledger"
+  }
+
   render() {
     let { theme } = this.context;
     const title = window.localStorage.getItem('ledgerTitle') || Config.title
@@ -21,7 +27,7 @@ class PageWrapper extends Component {
                 <div className="menu navbar-right">
                   <Link to="/account">账户</Link>
                   <Link to="/stats">统计</Link>
-                  <Link to="/ledger">退出</Link>
+                  <a onClick={this.handleOut}>退出</a>
                   {/* <Link to="/about">关于</Link> */}
                   {/* <ThemeToggle /> */}
                   <a href={Config.github}>
