@@ -1,10 +1,22 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Config from '../../config/Config';
+import { fetch } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
 import './styles/PageWrapper.css';
 
 class PageWrapper extends Component {
+
+  state = {
+    version: ''
+  }
+
+  componentDidMount() {
+    fetch('/api/version').then((version) => {
+      localStorage.setItem('version', version)
+      this.setState({ version })
+    })
+  }
 
   handleOut = () => {
     localStorage.clear()
@@ -45,7 +57,7 @@ class PageWrapper extends Component {
           <footer className="footer">
             <div className="copyright">
               © 2021&nbsp;&nbsp;
-              {Config.version}&nbsp;&nbsp;
+              {this.state.version}&nbsp;&nbsp;
               <a href={Config.guide} target="_blank">使用文档</a>&nbsp;&nbsp;
               <a href={Config.issue} target="_blank">反馈BUG</a>&nbsp;&nbsp;
             </div>
