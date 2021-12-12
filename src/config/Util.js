@@ -31,7 +31,7 @@ const checkStatus = (response) => {
   return response;
 }
 
-export const fetch = (url, { method, headers, body } = {}) => {
+export const fetch = (url, { method, headers, body, hintError } = {}) => {
   // 默认 header
   const _defaultHeaders = { "Content-Type": "application/json", ledgerId: window.localStorage.getItem("ledgerId") }
   return new Promise((resolve, reject) => {
@@ -39,6 +39,10 @@ export const fetch = (url, { method, headers, body } = {}) => {
       .then(checkStatus)
       .then(res => res.json())
       .then(res => {
+        if (hintError) {
+          resolve(res);
+          return
+        }
         const { code } = res;
         if (code === 200) {
           resolve(res.data);

@@ -9,7 +9,7 @@ class PayeeChart extends Component {
   state = {
     loading: false,
     payee: [],
-    type: 'cot',
+    type: 'sum',
     accountPrefix: 'Expenses',
     selectedMonth: ""
   }
@@ -75,9 +75,9 @@ class PayeeChart extends Component {
           onKeyPress={this.handleEnter}
           addonAfter={
             <Select value={this.state.type} onChange={this.handleChangeStatsType}>
+              <Select.Option value="sum">累计</Select.Option>
               <Select.Option value="cot">频次</Select.Option>
               <Select.Option value="avg">单笔</Select.Option>
-              <Select.Option value="sum">累计</Select.Option>
             </Select>
           }
         />

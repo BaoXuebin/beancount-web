@@ -1,4 +1,4 @@
-import { EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
+import { CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
 import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
@@ -141,6 +141,10 @@ class Index extends Component {
     this.setState({ addTransactionDrawerVisible: false })
   }
 
+  handleNavigateImportPage = () => {
+    this.props.history.replace('./import')
+  }
+
   handleAddTransaction = () => {
     this.queryMonthStats()
     this.queryTransactionList()
@@ -183,7 +187,10 @@ class Index extends Component {
             <MonthSelector value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
             &nbsp;&nbsp;{hideMoney ? <EyeInvisibleOutlined onClick={this.handleHideMoney} /> : <EyeOutlined onClick={this.handleHideMoney} />}
           </div>
-          <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
+          <div>
+            <Button size="small" icon={<CloudUploadOutlined />} onClick={this.handleNavigateImportPage}>导入</Button>&nbsp;&nbsp;
+            <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
+          </div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <Row>
