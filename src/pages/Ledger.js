@@ -129,7 +129,7 @@ class Ledger extends Component {
               <Input type="password" placeholder="账本密码" />
             </Form.Item>
             {
-              !this.state.selectedLedger &&
+              !this.state.selectedLedger.mail &&
               <Fragment>
                 <div style={{ fontSize: 14, marginBottom: '2rem', textAlign: 'center' }}>
                   <a
@@ -143,14 +143,14 @@ class Ledger extends Component {
                 {
                   this.state.expand &&
                   <Fragment>
-                    <Form.Item label="初始化日期" name="startDate" initialValue={this.state.config.startDate} rules={[{ required: true }]}>
-                      <Input type="date" placeholder="初始化日期" />
+                    <Form.Item label="账本开始日期" name="startDate" initialValue={this.state.config.startDate} rules={[{ required: true }]}>
+                      <Input type="date" placeholder="账本开始日期" />
                     </Form.Item>
-                    <Form.Item label="本币位" name="operatingCurrency" initialValue={this.state.config.operatingCurrency} rules={[{ required: true }]}>
-                      <Input placeholder="本币位" />
+                    <Form.Item label="币种" name="operatingCurrency" initialValue={this.state.config.operatingCurrency} rules={[{ required: true }]}>
+                      <Input placeholder="币种" />
                     </Form.Item>
-                    <Form.Item label="平衡账户" name="openingBalances" initialValue={this.state.config.openingBalances} rules={[{ required: true }]}>
-                      <Input placeholder="平衡账户" />
+                    <Form.Item label="平衡账户名称设置" name="openingBalances" initialValue={this.state.config.openingBalances} rules={[{ required: true }]}>
+                      <Input placeholder="平衡账户名称设置" />
                     </Form.Item>
                     <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" initialValue={this.state.config.isBak}>
                       <Switch />
