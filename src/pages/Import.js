@@ -1,5 +1,5 @@
-import { CloseOutlined, DoubleRightOutlined, UploadOutlined } from '@ant-design/icons';
-import { Avatar, Button, List, message, Select, Tag, Upload } from 'antd';
+import { CloseCircleOutlined, CloseOutlined, DoubleRightOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
+import { Avatar, Button, List, message, Modal, Select, Tag, Upload } from 'antd';
 import React, { Component } from 'react';
 import AliPayLogo from '../assets/aliPay.png';
 import WxPayLogo from '../assets/wxPay.png';
@@ -49,6 +49,8 @@ class Import extends Component {
   getUploadUrl = () => {
     if (this.state.payeeType === 'AliPay') {
       return '/api/auth/import/alipay'
+    } else if (this.state.payeeType === 'WxPay') {
+      return '/api/auth/import/wx'
     }
     return ''
   }
@@ -187,6 +189,20 @@ class Import extends Component {
     this.setState({ transactions: this.state.transactions.filter(t => t.id !== item.id) }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
   }
 
+  handleClearTransaction = () => {
+    Modal.confirm({
+      title: '确认情况交易列表？',
+      icon: <ExclamationCircleOutlined />,
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => {
+        this.setState({ transactions: [] }, () => {
+          localStorage.removeItem('transactions')
+        })
+      }
+    });
+  }
+
   render() {
     return (
       <div className="import-page page">
@@ -246,7 +262,13 @@ class Import extends Component {
         <div style={{ marginTop: '16px' }}>
           <List
             split={false}
-            header={`共 ${this.state.transactions.length} 条交易记录`}
+            header={
+              <div>
+                <stong>{`共 ${this.state.transactions.length} 条交易记录`}</stong>
+                &nbsp;&nbsp;
+                <Button type='danger' size='small' icon={<CloseCircleOutlined />} onClick={this.handleClearTransaction}>清空</Button>
+              </div>
+            }
             itemLayout="horizontal"
             dataSource={this.state.transactions}
             renderItem={item => (
