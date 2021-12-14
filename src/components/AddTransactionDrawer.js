@@ -233,13 +233,13 @@ class AddTransactionDrawer extends Component {
                       }
                       const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
                       let balanceAmount = null
-                      formEntriesValues.entries.filter(a => a && a.amount).forEach(entryValue => {
-                        const { amount, commodity, price, priceCommodity } = entryValue
-                        if (priceCommodity && priceCommodity !== commodity && amount && price) {
+                      formEntriesValues.entries.filter(a => a && a.number).forEach(entryValue => {
+                        const { number, commodity, price, priceCommodity } = entryValue
+                        if (priceCommodity && priceCommodity !== commodity && number && price) {
                           // 不同币种需要计算税率
-                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(amount).mul(Decimal(price)))
-                        } else if (amount) {
-                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(amount))
+                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(price)))
+                        } else if (number) {
+                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
                         }
                       })
                       return (
