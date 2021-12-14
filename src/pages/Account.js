@@ -1,4 +1,4 @@
-import { FormOutlined, LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -95,7 +95,8 @@ class Account extends Component {
     syncPriceAccount: null,
     syncPriceDrawerVisible: false,
     // 被编辑的账户是同样的货币单位
-    editAccountDiffCommodity: false
+    editAccountDiffCommodity: false,
+    refreshLoading: false
   }
 
   componentDidMount() {
@@ -141,7 +142,7 @@ class Account extends Component {
         }).catch(console.error).finally(() => { this.setState({ loading: false }) })
     } else {
       const acc = `${this.state.selectedAccountType}:${account}`
-      fetch('/api/auth/account', { method: 'POST', body: {account: acc, date, currency} })
+      fetch('/api/auth/account', { method: 'POST', body: { account: acc, date, currency } })
         .then(result => {
           this.setState({ drawerVisible: false, accounts: [result, ...this.state.accounts] });
           // 清空表单内容
@@ -242,6 +243,17 @@ class Account extends Component {
     this.setState({ transactionDrawerVisible: false, accountDrawerVisible: false, transactions: [] })
   }
 
+  handleRefreshAccountCache = () => {
+    this.setState({ refreshLoading: true })
+    fetch('/api/auth/account/refresh', { method: 'POST' })
+      .then(() => {
+        message.success("缓存已更新");
+        this.queryAllAccounts()
+        this.queryAllAccountTypes()
+      })
+      .finally(() => { this.setState({ refreshLoading: false }) })
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
@@ -252,9 +264,15 @@ class Account extends Component {
     return (
       <div className="account-page">
         <div className="button-wrapper">
-          <Button type="primary" size="small" icon={<PlusOutlined />} onClick={this.handleOpenDrawer}>
-            添加账户
-          </Button>
+          <div>
+            <Button type="primary" size="small" icon={<PlusOutlined />} onClick={this.handleOpenDrawer}>
+              添加账户
+            </Button>
+            &nbsp;&nbsp;
+            <Button size="small" loading={this.state.refreshLoading} icon={<Loading3QuartersOutlined />} onClick={this.handleRefreshAccountCache}>
+              刷新缓存
+            </Button>
+          </div>
           <Button type="text" size="small" icon={<FormOutlined />} onClick={() => { this.props.history.push('/edit') }}>
             编辑源文件
           </Button>
@@ -398,8 +416,8 @@ class Account extends Component {
               validateMessages={validateMessages}
             >
               <Form.Item name="date" rules={[{ required: true }]}>
-                  <Input type="date" placeholder="时间" />
-                </Form.Item>
+                <Input type="date" placeholder="时间" />
+              </Form.Item>
               <Form.Item name="number" rules={[{ required: true }]}>
                 <Input type="number" placeholder="金额" addonAfter={this.state.editAccount.currency} />
               </Form.Item>
