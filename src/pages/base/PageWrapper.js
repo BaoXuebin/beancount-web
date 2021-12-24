@@ -56,8 +56,9 @@ class PageWrapper extends Component {
           </div>
           <footer className="footer">
             <div className="copyright">
-              © 2021&nbsp;&nbsp;
-              {this.state.version}&nbsp;&nbsp;
+              © {new Date().getFullYear()}&nbsp;&nbsp;
+              <a href={`https://github.com/BaoXuebin/beancount-gs/releases/tag/${this.state.version}`} target="_blank">{this.state.version}</a>&nbsp;&nbsp;
+              <a href={Config.license} target="_blank">MIT</a>&nbsp;&nbsp;
               <a href={Config.guide} target="_blank">使用文档</a>&nbsp;&nbsp;
               <a href={Config.issue} target="_blank">反馈BUG</a>&nbsp;&nbsp;
             </div>

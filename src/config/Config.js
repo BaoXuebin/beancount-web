@@ -4,4 +4,5 @@ export default {
   github: 'https://github.com/BaoXuebin/beancount-gs',
   guide: 'https://www.yuque.com/chuyi-ble7p/beancount-gs',
   issue: 'https://github.com/BaoXuebin/beancount-gs/issues',
+  license: 'https://github.com/BaoXuebin/beancount-gs/blob/main/License',
 };

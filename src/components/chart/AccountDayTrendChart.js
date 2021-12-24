@@ -10,7 +10,7 @@ class AccountDayTrendChart extends Component {
   state = {
     loading: false,
     dayAmountData: [],
-    type: 'avg',
+    type: 'day',
     accountPrefix: 'Expenses',
     selectedMonth: ""
   }
@@ -75,7 +75,9 @@ class AccountDayTrendChart extends Component {
           onKeyPress={this.handleEnter}
           addonAfter={
             <Select value={this.state.type} onChange={this.handleChangeStatsType}>
-              <Select.Option value="avg">每天</Select.Option>
+              <Select.Option value="day">按天</Select.Option>
+              <Select.Option value="month">按月</Select.Option>
+              <Select.Option value="year">按年</Select.Option>
               <Select.Option value="sum">累计</Select.Option>
             </Select>
           }
