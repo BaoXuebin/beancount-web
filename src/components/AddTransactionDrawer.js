@@ -278,7 +278,7 @@ class AddTransactionDrawer extends Component {
                                 name={[field.name, 'price']}
                                 fieldKey={[field.fieldKey, 'price']}
                               >
-                                <Input type="number" addonBefore={`1 ${accountCommodity}≈`} addonAfter={this.props.commodity.currency} placeholder={'汇率/净值（选填）'} onChange={this.handleChangeAmount} />
+                                <Input type="number" step="0.01" addonBefore={`1 ${accountCommodity}≈`} addonAfter={this.props.commodity.currency} placeholder={'汇率/净值（选填）'} onChange={this.handleChangeAmount} />
                               </Form.Item>
                             </Fragment>
                           }
@@ -298,6 +298,7 @@ class AddTransactionDrawer extends Component {
                             >
                               <Input
                                 type="number"
+                                step="0.01"
                                 addonBefore={accountCommodity}
                                 placeholder={balanceAmount || "金额"}
                                 onChange={this.handleChangeAmount}

@@ -419,7 +419,7 @@ class Account extends Component {
                 <Input type="date" placeholder="时间" />
               </Form.Item>
               <Form.Item name="number" rules={[{ required: true }]}>
-                <Input type="number" placeholder="金额" addonAfter={this.state.editAccount.currency} />
+                <Input type="number" step="0.01" placeholder="金额" addonAfter={this.state.editAccount.currency} />
               </Form.Item>
               <Form.Item>
                 <Alert type="info" message="核算账户前，请确保 Equity:OpeningBalances 账户存在" showIcon />

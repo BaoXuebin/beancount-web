@@ -59,7 +59,7 @@ class AccountSyncPriceDrawer extends Component {
               name="price"
               rules={[{ required: true }]}
             >
-              <Input type="number" addonBefore={`1 ${editAccount.currency}≈`} addonAfter={editAccount.marketCurrency} placeholder="净值/汇率" />
+              <Input type="number" step="0.01" addonBefore={`1 ${editAccount.currency}≈`} addonAfter={editAccount.marketCurrency} placeholder="净值/汇率" />
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} className="submit-button">
