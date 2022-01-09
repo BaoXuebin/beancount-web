@@ -5,11 +5,13 @@ import { Component, Fragment } from 'react';
 import { fetch, getAccountIcon } from '../config/Util';
 import AccountAmount from './AccountAmount';
 import AccountIcon from './AccountIcon';
+import MonthSelector from './MonthSelector';
 
 class AccountTransactionDrawer extends Component {
 
   state = {
     transactions: [],
+    selectedMonth: "",
     loading: false,
   }
 
@@ -28,10 +30,28 @@ class AccountTransactionDrawer extends Component {
   handleQueryAccountTransaction = (account) => {
     if (!account) return;
     this.setState({ loading: true })
-    fetch(`/api/auth/transaction?account=${account}`)
+
+    let year, month;
+    if (this.state.selectedMonth) {
+      const yearAndMonth = this.state.selectedMonth.split('-').filter(a => a)
+      if (yearAndMonth.length === 1) {
+        year = yearAndMonth[0]
+      } else if (yearAndMonth.length === 2) {
+        year = yearAndMonth[0]
+        month = yearAndMonth[1]
+      }
+    }
+
+    fetch(`/api/auth/transaction?account=${account}&year=${year}&month=${month}`)
       .then(transactions => {
         this.setState({ transactions })
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
+  }
+
+  handleChangeMonth = (selectedMonth) => {
+    this.setState({ selectedMonth }, () => {
+      this.handleQueryAccountTransaction(this.props.account)
+    })
   }
 
   render() {
@@ -50,6 +70,7 @@ class AccountTransactionDrawer extends Component {
         }
       >
         <div className="page-form">
+          <MonthSelector size="middle" value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
           <List
             itemLayout="horizontal"
             loading={loading}
@@ -69,7 +90,10 @@ class AccountTransactionDrawer extends Component {
               return (
                 <List.Item
                   actions={[
-                    item.number ? AccountAmount(editAccount, item.number, item.currencySymbol, item.currency) : ''
+                    <div style={{ textAlign: 'right' }}>
+                      <div>{item.number ? AccountAmount(editAccount, item.number, item.currencySymbol, item.currency) : ''}</div>
+                      <div style={{ fontSize: '12px' }}>{item.balance}</div>
+                    </div>
                   ]}
                 >
                   <List.Item.Meta
@@ -77,7 +101,7 @@ class AccountTransactionDrawer extends Component {
                     title={item.desc}
                     description={
                       <div>
-                        { item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div> }
+                        {item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>}
                         <span>{item.date}&nbsp;{item.payee}&nbsp;{item.commodity}</span>
                         {
                           isInvestAccount &&
