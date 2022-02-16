@@ -1,5 +1,5 @@
-import { BookOutlined, CalendarOutlined, DownOutlined, PlusOutlined, UpOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, Switch } from 'antd';
+import { BookOutlined, CalendarOutlined, DownOutlined, ExclamationCircleOutlined, PlusOutlined, UpOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Modal, Switch } from 'antd';
 import React, { Component, Fragment } from 'react';
 import { fetch } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
@@ -49,6 +49,22 @@ class Ledger extends Component {
   }
 
   handleCreateLedger = (values) => {
+    // 密码为空时进行安全提醒
+    if (!values.secret && this.state.newLedger) {
+      Modal.confirm({
+        title: '提醒',
+        icon: <ExclamationCircleOutlined />,
+        content: '未设置密码，这可能会导致数据不安全',
+        okText: '确认不设置密码',
+        cancelText: '取消',
+        onOk: () => this.handleReqCreateLedger(values)
+      });
+      return;
+    }
+    this.handleReqCreateLedger(values)
+  }
+
+  handleReqCreateLedger = (values) => {
     this.setState({ loading: true })
     fetch('/api/ledger', { method: 'POST', headers: { "Content-Type": "application/json" }, body: values })
       .then(res => {
