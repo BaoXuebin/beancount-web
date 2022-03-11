@@ -1,4 +1,4 @@
-import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -273,9 +273,14 @@ class Account extends Component {
               刷新缓存
             </Button>
           </div>
-          <Button type="text" size="small" icon={<FormOutlined />} onClick={() => { this.props.history.push('/edit') }}>
-            编辑源文件
-          </Button>
+          <div>
+            <Button type="text" size="small" icon={<FormOutlined />} onClick={() => { this.props.history.push('/edit') }}>
+              编辑源文件
+            </Button>
+            <Button type="text" size="small" icon={<SettingOutlined />} onClick={() => { this.props.history.push('/setting') }}>
+              设置
+            </Button>
+          </div>
         </div>
         <Drawer
           title="新增账户"
