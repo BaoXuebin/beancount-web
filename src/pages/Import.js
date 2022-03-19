@@ -72,14 +72,14 @@ class Import extends Component {
         message.success(`${info.file.name} 解析成功`);
         const transactions = data.map(d => {
           // 收入
-          if (d.account.indexOf('Income') && this.state.payeeAccount) {
+          if (d.account.indexOf('Income')) {
             d.originAccount = this.state.payeeAccount
             d.originNumber = -1 * Number(d.number)
             d.number = Number(d.number)
             d.targetNumber = d.number
           }
           // 支出
-          if (d.account.indexOf('Expenses') && this.state.payeeAccount) {
+          if (d.account.indexOf('Expenses')) {
             d.targetAccount = this.state.payeeAccount
             d.targetNumber = Number(d.number)
             d.number = -1 * Number(d.number)
@@ -191,7 +191,7 @@ class Import extends Component {
 
   handleClearTransaction = () => {
     Modal.confirm({
-      title: '确认情况交易列表？',
+      title: '确认清除交易列表？',
       icon: <ExclamationCircleOutlined />,
       okText: '确认',
       cancelText: '取消',
