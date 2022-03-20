@@ -38,7 +38,7 @@ class AddTransactionDrawer extends Component {
     templates: [], // 记账模版
     showTag: false,
     tags: [],
-    isDivide: true,
+    isDivide: false,
   }
 
   componentDidMount() {
@@ -128,7 +128,9 @@ class AddTransactionDrawer extends Component {
       const date = dayjs(values.date)
       values.divideDateList = []
       for (let i = 0; i < divideCount; i++) {
-        if (divideCycle === 'week') {
+        if (divideCycle === 'day') {
+          values.divideDateList.push(date.add(i, 'days').format('YYYY-MM-DD'))
+        } else if (divideCycle === 'week') {
           values.divideDateList.push(date.add(i, 'weeks').format('YYYY-MM-DD'))
         } else if (divideCycle === 'month') {
           values.divideDateList.push(date.add(i, 'months').format('YYYY-MM-DD'))
@@ -251,6 +253,7 @@ class AddTransactionDrawer extends Component {
                 </Form.Item>
                 <Form.Item name="divideCycle" initialValue={"month"} style={{ flex: '1' }}>
                   <Select style={{ width: '100%' }}>
+                    <Select.Option value="day">间隔一天</Select.Option>
                     <Select.Option value="week">间隔一周</Select.Option>
                     <Select.Option value="month">间隔一月</Select.Option>
                   </Select>
