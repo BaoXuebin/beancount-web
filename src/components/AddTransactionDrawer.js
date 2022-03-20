@@ -1,4 +1,4 @@
-import { CloseCircleOutlined, PlusOutlined, TagsOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, HourglassOutlined, PlusOutlined, TagsOutlined } from '@ant-design/icons';
 import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -37,7 +37,8 @@ class AddTransactionDrawer extends Component {
     autoCompletePayees: [],
     templates: [], // 记账模版
     showTag: false,
-    tags: []
+    tags: [],
+    isDivide: true,
   }
 
   componentDidMount() {
@@ -122,6 +123,20 @@ class AddTransactionDrawer extends Component {
 
   handleSubmit = (values) => {
     this.setState({ loading: true })
+    const { divideCount, divideCycle } = values
+    if (divideCount && divideCount > 0) {
+      const date = dayjs(values.date)
+      values.divideDateList = []
+      for (let i = 0; i < divideCount; i++) {
+        if (divideCycle === 'week') {
+          values.divideDateList.push(date.add(i, 'weeks').format('YYYY-MM-DD'))
+        } else if (divideCycle === 'month') {
+          values.divideDateList.push(date.add(i, 'months').format('YYYY-MM-DD'))
+        }
+      }
+      delete values.divideCount
+      delete values.divideCycle
+    }
     fetch('/api/auth/transaction', { method: 'POST', body: values })
       .then(res => {
         message.success('添加成功')
@@ -152,12 +167,15 @@ class AddTransactionDrawer extends Component {
   handleSetTemplate = (template) => {
     delete template.date;
     template.entries.forEach(e => e.amount = Number(e.amount))
-    console.log(template)
     this.formRef.current.setFieldsValue(template)
   }
 
   handleToggleShowTagInput = () => {
     this.setState({ showTag: !this.state.showTag })
+  }
+
+  handleToggleShowDivideInput = () => {
+    this.setState({ isDivide: !this.state.isDivide })
   }
 
   render() {
@@ -198,26 +216,47 @@ class AddTransactionDrawer extends Component {
               ))}
             </AutoComplete>
           </Form.Item>
+          <Form.Item
+            name="desc" rules={[{ required: true, message: '详细描述' }]}
+            style={{ flex: 1 }}
+          >
+            <Input
+              placeholder="详细描述，记录细节"
+            />
+          </Form.Item>
           <div style={{ display: 'flex' }}>
-            <Form.Item
-              name="desc" rules={[{ required: true, message: '详细描述' }]}
-              style={{ flex: 1 }}
-            >
-              <Input
-                placeholder="详细描述，记录细节"
-              />
-            </Form.Item>
             <TagsOutlined style={{ color: this.state.showTag ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowTagInput} />
+            <HourglassOutlined style={{ color: this.state.isDivide ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowDivideInput} />
           </div>
           {
             this.state.showTag &&
-            <Form.Item name="tags" rules={[{ required: true }]}>
-              <Select mode="tags" style={{ width: '100%' }} placeholder="标签（不支持中文），旅行/计划/学习">
-                {
-                  this.state.tags.map(tag => <Select.Option key={tag} value={tag}>{tag}</Select.Option>)
-                }
-              </Select>
-            </Form.Item>
+            <Fragment>
+              <Divider plain>标签</Divider>
+              <Form.Item name="tags" rules={[{ required: true }]}>
+                <Select mode="tags" style={{ width: '100%' }} placeholder="标签（不支持中文），旅行/计划/学习">
+                  {
+                    this.state.tags.map(tag => <Select.Option key={tag} value={tag}>{tag}</Select.Option>)
+                  }
+                </Select>
+              </Form.Item>
+            </Fragment>
+          }
+          {
+            this.state.isDivide &&
+            <Fragment>
+              <Divider plain>预支分期</Divider>
+              <div style={{ display: 'flex' }}>
+                <Form.Item name="divideCount" rules={[{ required: true, message: "分期数" }]} style={{ flex: '2', marginRight: '12px' }}>
+                  <Input type="number" step="1" addonAfter="期" />
+                </Form.Item>
+                <Form.Item name="divideCycle" initialValue={"month"} style={{ flex: '1' }}>
+                  <Select style={{ width: '100%' }}>
+                    <Select.Option value="week">间隔一周</Select.Option>
+                    <Select.Option value="month">间隔一月</Select.Option>
+                  </Select>
+                </Form.Item>
+              </div>
+            </Fragment>
           }
           <Divider plain>账户明细</Divider>
           <Form.Item>
@@ -300,7 +339,7 @@ class AddTransactionDrawer extends Component {
                                 type="number"
                                 step="0.01"
                                 addonBefore={accountCommodity}
-                                placeholder={balanceAmount || "金额"}
+                                placeholder={balanceAmount || `${this.state.isDivide ? '预支分期总' : ''}金额`}
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}
                               />
