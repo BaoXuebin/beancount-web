@@ -1,4 +1,4 @@
-import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
+import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -8,6 +8,7 @@ import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
 import AccountSyncPriceDrawer from '../components/AccountSyncPriceDrawer';
 import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
+import CommodityPriceChartDrawer from '../components/CommodityPriceChartDrawer';
 import { fetch, getAccountCata, getAccountIcon, getAccountName } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
@@ -96,7 +97,8 @@ class Account extends Component {
     syncPriceDrawerVisible: false,
     // 被编辑的账户是同样的货币单位
     editAccountDiffCommodity: false,
-    refreshLoading: false
+    refreshLoading: false,
+    commodityPriceDrawerVisible: false,
   }
 
   componentDidMount() {
@@ -243,6 +245,14 @@ class Account extends Component {
     this.setState({ transactionDrawerVisible: false, accountDrawerVisible: false, transactions: [] })
   }
 
+  handleOpenCommodityPriceDrawer = () => {
+    this.setState({ commodityPriceDrawerVisible: true })
+  }
+
+  handleCloseCommodityPriceDrawer = () => {
+    this.setState({ commodityPriceDrawerVisible: false })
+  }
+
   handleRefreshAccountCache = () => {
     this.setState({ refreshLoading: true })
     fetch('/api/auth/account/refresh', { method: 'POST' })
@@ -274,6 +284,9 @@ class Account extends Component {
             </Button>
           </div>
           <div>
+            <Button type="text" size="small" icon={<SlidersOutlined />} onClick={() => { this.setState({ commodityPriceDrawerVisible: true }) }}>
+              汇率曲线
+            </Button>
             <Button type="text" size="small" icon={<FormOutlined />} onClick={() => { this.props.history.push('/edit') }}>
               编辑源文件
             </Button>
@@ -489,6 +502,10 @@ class Account extends Component {
           account={this.state.editAccount}
           visible={syncPriceDrawerVisible}
           onClose={this.handleCloseSyncPriceDrawer}
+        />
+        <CommodityPriceChartDrawer
+          visible={this.state.commodityPriceDrawerVisible}
+          onClose={this.handleCloseCommodityPriceDrawer}
         />
       </div >
     );
