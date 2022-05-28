@@ -203,24 +203,50 @@ class Import extends Component {
     });
   }
 
+  handleOpenDownloadGuide = () => {
+    Modal.info({
+      title: `如何下载${this.getPayeeName()}账单？`,
+      content: (
+        <div>
+          {
+            this.state.payeeType === 'AliPay' &&
+            <div>
+              <p>1. 登录 <a href="https://consumeprod.alipay.com/record/advanced.htm" target="_blank">支付宝官网</a></p>
+              <p>2. 选择 <strong>下载账单：Excel格式</strong></p>
+            </div>
+          }
+          {
+            this.state.payeeType === 'WxPay' &&
+            <div>
+              <p>1. 打开手机微信App</p>
+              <p>2. 点击：我>>服务>>钱包>>账单>>常见问题</p>
+              <p>3. 点击下载账单，选择用于个人对账</p>
+            </div>
+          }
+        </div>
+      ),
+      okText: "知道了"
+    });
+  }
+
   render() {
     return (
       <div className="import-page page">
         <div>
           <div>
-            <Select placeholder="选择导入账单类型" value={this.state.payeeType} style={{ width: 160 }} onChange={this.handleChangePayeeType}>
+            <Select placeholder="选择导入账单类型" value={this.state.payeeType} style={{ width: 120 }} onChange={this.handleChangePayeeType}>
               <Select.Option value="AliPay">
                 <div>
                   <Avatar size="small" src={AliPayLogo} />
                   &nbsp;
-                  支付宝账单
+                  支付宝
                 </div>
               </Select.Option>
               <Select.Option value="WxPay">
                 <div>
                   <Avatar size="small" src={WxPayLogo} />
                   &nbsp;
-                  微信账单
+                  微信
                 </div>
               </Select.Option>
             </Select>
@@ -239,6 +265,7 @@ class Import extends Component {
                 </Select.Option>)
               }
             </Select>
+            <a style={{ marginLeft: '12px' }} onClick={this.handleOpenDownloadGuide}>如何下载{this.getPayeeName()}账单？</a>
           </div>
           <Upload
             name='file'
@@ -247,12 +274,7 @@ class Import extends Component {
             onChange={this.handleChangeFile}
           >
             <Button loading={this.state.loading} icon={<UploadOutlined />} style={{ width: '100%', marginTop: '15px' }} >
-              {
-                this.state.payeeType === 'AliPay' && '导入支付宝账单(CSV文件)'
-              }
-              {
-                this.state.payeeType === 'WxPay' && '导入微信账单'
-              }
+              导入{this.getPayeeName()}账单
             </Button>
           </Upload>
           <Button type="primary" disabled={this.state.transactions.length === 0} loading={this.state.loading} onClick={this.handleImport} style={{ width: '100%', marginTop: '15px' }} >
