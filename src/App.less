@@ -1,23 +1,18 @@
-
-// .App {
-//   text-align: center;
-// }
-
 .App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
+  animation     : App-logo-spin infinite 20s linear;
+  height        : 40vmin;
   pointer-events: none;
 }
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-height      : 100vh;
+  display         : flex;
+  flex-direction  : column;
+  align-items     : center;
+  justify-content : center;
+  font-size       : calc(10px + 2vmin);
+  color           : white;
 }
 
 .App-link {
@@ -28,8 +23,27 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
+  }
+}
+
+.App .page code {
+  padding      : 3px 5px;
+  border-radius: 4px;
+  color        : #c7254e;
+  background   : #f8f5ec;
+}
+
+.page-drawer {
+  .page-form {
+    max-width: 800px;
+    width    : 100%;
+
+    .submit-button {
+      width: 100%;
+    }
   }
 }
 
@@ -39,36 +53,16 @@
 
 .App .page a.text-button:hover {
   background-color: #1abc9c;
-  color: white;
+  color           : white;
 }
 
-.App .dark-theme .page input {
-  background-color: #292a2d;
-  color: #a9a9b3;
-  border: 1px solid #a9a9b3;
-}
+@root-entry-name: default;
+@import "~antd/lib/style/index-pure.less";
+@import "~antd/lib/style/components.less";
 
-.App .dark-theme .page textarea {
-  background-color: #292a2d;
-  color: #a9a9b3;
-}
-
-.App .page code {
-  padding: 3px 5px;
-  border-radius: 4px;
-  color: #c7254e;
-  background: #f8f5ec;
-}
-
-@import '~antd/dist/antd.less';
-
-.page-drawer {
-  .page-form {
-    max-width: 800px;
-    width: 100%;
-
-    .submit-button {
-      width: 100%;
-    }
-  }
-}
+// @media (prefers-color-scheme: dark) {
+//   // @import 'App.dark.less';
+//   @root-entry-name: dark;
+//   @import "~antd/lib/style/index-pure.less";
+//   @import "~antd/lib/style/components.less";
+// }

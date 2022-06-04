@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import ThemeToggle from '../../components/ThemeToggle';
 import Config from '../../config/Config';
 import { fetch } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
@@ -27,7 +28,7 @@ class PageWrapper extends Component {
     let { theme } = this.context;
     const title = window.localStorage.getItem('ledgerTitle') || Config.title
     return (
-      <div className={`${theme}-theme`}>
+      <div className={`${theme}-theme page-wrapper`}>
         <div className="wrapper">
           <header>
             <nav className="navbar">
@@ -41,7 +42,7 @@ class PageWrapper extends Component {
                   <Link to="/stats">统计</Link>
                   <a onClick={this.handleOut}>退出</a>
                   {/* <Link to="/about">关于</Link> */}
-                  {/* <ThemeToggle /> */}
+                  <ThemeToggle />
                   <a href={Config.github}>
                     <img src="https://img.shields.io/github/stars/BaoXuebin/beancount-gs?style=social" />
                   </a>
