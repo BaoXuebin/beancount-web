@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import ThemeToggle from '../../components/ThemeToggle';
 import Config from '../../config/Config';
 import { fetch } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
@@ -42,7 +41,7 @@ class PageWrapper extends Component {
                   <Link to="/stats">统计</Link>
                   <a onClick={this.handleOut}>退出</a>
                   {/* <Link to="/about">关于</Link> */}
-                  <ThemeToggle />
+                  {/* <ThemeToggle /> */}
                   <a href={Config.github}>
                     <img src="https://img.shields.io/github/stars/BaoXuebin/beancount-gs?style=social" />
                   </a>
