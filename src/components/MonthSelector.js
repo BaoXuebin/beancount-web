@@ -38,12 +38,14 @@ class MonthSelector extends Component {
         ...this.props
         }
       >
-        <Select.Option value="">不限</Select.Option>
         {
-          this.state.years.map(year => <Select.Option key={year} value={year}>{dayjs(year).format('YYYY年')}</Select.Option>)
+          !this.props.onlyShowMonth && <Select.Option value="">不限</Select.Option>
         }
         {
-          this.state.months.map(month => <Select.Option key={month} value={month}>{dayjs(month).format('YYYY年MM月')}</Select.Option>)
+          !this.props.onlyShowMonth && this.state.years.reverse().map(year => <Select.Option key={year} value={year}>{dayjs(year).format('YYYY年')}</Select.Option>)
+        }
+        {
+          this.state.months.reverse().map(month => <Select.Option key={month} value={month}>{dayjs(month).format('YYYY年MM月')}</Select.Option>)
         }
       </Select>
     )

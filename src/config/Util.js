@@ -5,7 +5,7 @@ import _fetch from 'isomorphic-fetch';
 export const getAccountCata = account => {
   const array = account.split(':')
   if (array && array.length >= 1) {
-    return account.split(':')[0]
+    return array[0]
   }
   return ''
 }
@@ -15,7 +15,7 @@ export const getAccountIcon = account => {
 export const getAccountName = account => {
   const array = account.split(':')
   if (array && array.length >= 2) {
-    return account.split(':')[array.length - 1]
+    return array[array.length - 1]
   }
   return ''
 }

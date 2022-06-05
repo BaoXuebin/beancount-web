@@ -1,4 +1,4 @@
-import { CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
 import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
@@ -6,6 +6,7 @@ import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
 import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
 import AddTransactionDrawer from '../components/AddTransactionDrawer';
+import CalendarDrawer from '../components/CalendarDrawer';
 import MonthSelector from '../components/MonthSelector';
 import StatisticAmount from '../components/StatisticAmount';
 import TagTransactionDrawer from '../components/TagTransactionDrawer';
@@ -80,7 +81,9 @@ class Index extends Component {
     accountTransactionDrawerVisible: false,
     selectedAccount: null,
     tagTransactionDrawerVisible: false,
-    selectedTag: null
+    selectedTag: null,
+    // 账单日历
+    calendarDrawerVisible: false,
   }
 
   componentDidMount() {
@@ -173,6 +176,14 @@ class Index extends Component {
     this.setState({ tagTransactionDrawerVisible: false })
   }
 
+  handleOpenCalendarDrawer = () => {
+    this.setState({ calendarDrawerVisible: true })
+  }
+
+  handleCloseCalendarDrawer = () => {
+    this.setState({ calendarDrawerVisible: false })
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
@@ -188,6 +199,7 @@ class Index extends Component {
             &nbsp;&nbsp;{hideMoney ? <EyeInvisibleOutlined onClick={this.handleHideMoney} /> : <EyeOutlined onClick={this.handleHideMoney} />}
           </div>
           <div>
+            <Button size="small" icon={<AccountBookOutlined />} onClick={this.handleOpenCalendarDrawer}>日历</Button>&nbsp;&nbsp;
             <Button size="small" icon={<CloudUploadOutlined />} onClick={this.handleNavigateImportPage}>导入</Button>&nbsp;&nbsp;
             <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
           </div>
@@ -265,6 +277,14 @@ class Index extends Component {
             tag={this.state.selectedTag}
             visible={tagTransactionDrawerVisible}
             onClose={this.handleCloseTagTransactionDrawer}
+          />
+        }
+        {
+          this.state.selectedMonth &&
+          <CalendarDrawer
+            month={this.state.selectedMonth}
+            visible={this.state.calendarDrawerVisible}
+            onClose={this.handleCloseCalendarDrawer}
           />
         }
       </div>
