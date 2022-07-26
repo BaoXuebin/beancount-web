@@ -1,5 +1,5 @@
 import { CloseCircleOutlined, CloseOutlined, DoubleRightOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
-import { Avatar, Button, List, message, Modal, Select, Tag, Upload } from 'antd';
+import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload } from 'antd';
 import React, { Component } from 'react';
 import AliPayLogo from '../assets/aliPay.png';
 import WxPayLogo from '../assets/wxPay.png';
@@ -111,6 +111,26 @@ class Import extends Component {
     this.setState({ payeeAccount, transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
   }
 
+  handleChangePayee = (oldPayee, newPayee) => {
+    const transactions = this.state.transactions.map(d => {
+      if (d.payee === oldPayee) {
+        d.payee = newPayee
+      }
+      return d
+    })
+    this.setState({ transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
+  }
+
+  handleChangeDesc = (id, desc) => {
+    const transactions = this.state.transactions.map(d => {
+      if (d.id === id) {
+        d.desc = desc
+      }
+      return d
+    })
+    this.setState({ transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
+  }
+
   handleChangeOriginAccount = (account, item) => {
     const transactions = this.state.transactions.map(transaction => {
       if ((transaction.payee === item.payee || transaction.desc === item.desc) && !transaction.originAccount) {
@@ -143,9 +163,6 @@ class Import extends Component {
 
   handleChangeTags = (tags, item) => {
     const transactions = this.state.transactions.map(transaction => {
-      if ((transaction.payee === item.payee || transaction.desc === item.desc) && !transaction.tags) {
-        transaction.tags = tags
-      }
       if (transaction.id === item.id) {
         transaction.tags = tags
       }
@@ -235,14 +252,14 @@ class Import extends Component {
         <div>
           <div>
             <Select placeholder="选择导入账单类型" value={this.state.payeeType} style={{ width: 120 }} onChange={this.handleChangePayeeType}>
-              <Select.Option value="AliPay">
+              <Select.Option key="AliPay" value="AliPay">
                 <div>
                   <Avatar size="small" src={AliPayLogo} />
                   &nbsp;
                   支付宝
                 </div>
               </Select.Option>
-              <Select.Option value="WxPay">
+              <Select.Option key="WxPay" value="WxPay">
                 <div>
                   <Avatar size="small" src={WxPayLogo} />
                   &nbsp;
@@ -259,7 +276,7 @@ class Import extends Component {
               style={{ marginLeft: '10px', width: '300px' }}
             >
               {
-                this.state.accounts.map(account => <Select.Option value={account.account}>
+                this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
                   <AccountIcon style={{ width: '22px', height: '22px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
                   {account.account}
                 </Select.Option>)
@@ -293,8 +310,10 @@ class Import extends Component {
             }
             itemLayout="horizontal"
             dataSource={this.state.transactions}
+            rowKey={record => record.id}
             renderItem={item => (
               <List.Item
+                key={item.id}
                 actions={[
                   item.number ? <div>{AccountAmount(item.account, item.number, item.currencySymbol, item.currency)}</div> : '',
                   <CloseOutlined color='red' onClick={() => { this.handleDeleteTransaction(item) }} />
@@ -302,7 +321,7 @@ class Import extends Component {
               >
                 <List.Item.Meta
                   avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                  title={item.desc}
+                  title={<Input size='small' value={item.desc} onChange={(e) => this.handleChangeDesc(item.id, e.target.value) } style={{ width: '240px', margin: 'auto 10px' }} />}
                   description={
                     <div>
                       {
@@ -310,7 +329,7 @@ class Import extends Component {
                       }
                       {item.date}&nbsp;
                       <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{getAccountName(item.account)}</span>
-                      &nbsp;{item.payee}&nbsp;
+                      <Input size='small' value={item.payee} onChange={(e) => this.handleChangePayee(item.payee, e.target.value) } style={{ width: '240px', margin: 'auto 10px' }} />
                       {item.error && <Tag color="red">导入异常</Tag>}
                       <div style={{ marginTop: '10px' }}>
                         <Select
@@ -323,7 +342,7 @@ class Import extends Component {
                           style={{ marginRight: '10px', width: '240px' }}
                         >
                           {
-                            this.state.accounts.map(account => <Select.Option value={account.account}>
+                            this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
                               <AccountIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
                               {account.account}
                             </Select.Option>)
@@ -340,7 +359,7 @@ class Import extends Component {
                           style={{ marginLeft: '10px', width: '240px' }}
                         >
                           {
-                            this.state.accounts.map(account => <Select.Option value={account.account}>
+                            this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
                               <AccountIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
                               {account.account}
                             </Select.Option>)
@@ -358,7 +377,7 @@ class Import extends Component {
                           style={{ width: '514px' }}
                         >
                           {
-                            this.state.tags.map(tag => <Select.Option value={tag}>
+                            this.state.tags.map(tag => <Select.Option id={tag} value={tag}>
                               {tag}
                             </Select.Option>)
                           }

@@ -141,6 +141,9 @@ class Ledger extends Component {
             <Form.Item name="ledgerName" label="账本名称" initialValue={this.state.selectedLedger.mail || ""} rules={[{ required: true }]}>
               <Input placeholder="你可以创建多个的账本，账本之间的数据无法互通" />
             </Form.Item>
+            <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" rules={[{ required: true }]} initialValue={this.state.config.isBak}>
+              <Switch />
+            </Form.Item>
             <Form.Item name="secret" label="账本密码">
               <Input type="password" placeholder="账本密码" />
             </Form.Item>
@@ -167,9 +170,6 @@ class Ledger extends Component {
                     </Form.Item>
                     <Form.Item label="平衡账户名称设置" name="openingBalances" initialValue={this.state.config.openingBalances} rules={[{ required: true }]}>
                       <Input placeholder="平衡账户名称设置" />
-                    </Form.Item>
-                    <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" initialValue={this.state.config.isBak}>
-                      <Switch />
                     </Form.Item>
                   </Fragment>
                 }
