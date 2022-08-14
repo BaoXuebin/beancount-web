@@ -4,11 +4,15 @@ import Config from '../../config/Config';
 import { fetch } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
 import './styles/PageWrapper.css';
+import { WarningOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Modal } from 'antd';
 
 class PageWrapper extends Component {
 
   state = {
-    version: ''
+    version: '',
+    isModalVisible: false,
+    error: [],
   }
 
   componentDidMount() {
@@ -16,11 +20,23 @@ class PageWrapper extends Component {
       localStorage.setItem('version', version)
       this.setState({ version })
     })
+    fetch('/api/auth/ledger/check').then((data) => {
+      this.setState({ error: data })
+    })
   }
 
   handleOut = () => {
     localStorage.clear()
+    this.setState({ error: [] })
     window.location.href = "/web/#/ledger"
+  }
+
+  openErrorModal = () => {
+    this.setState({ isModalVisible: true })
+  }
+
+  closeErrorModal = () => {
+    this.setState({ isModalVisible: false })
   }
 
   render() {
@@ -37,6 +53,9 @@ class PageWrapper extends Component {
                   <Link to="/">{title}</Link>
                 </div>
                 <div className="menu navbar-right">
+                  {
+                    this.state.error.length > 0 && <a><WarningOutlined style={{ color: 'red' }} onClick={this.openErrorModal} /></a>
+                  }
                   <Link to="/account">账户</Link>
                   <Link to="/stats">统计</Link>
                   <a onClick={this.handleOut}>退出</a>
@@ -63,6 +82,11 @@ class PageWrapper extends Component {
               <a href={Config.issue} target="_blank">反馈BUG</a>&nbsp;&nbsp;
             </div>
           </footer>
+          <Modal width={860} visible={this.state.isModalVisible} onOk={this.closeErrorModal} onCancel={this.closeErrorModal}>
+            <pre>
+              {this.state.error.map(e => <p>{e}</p>)}
+            </pre>
+          </Modal>
         </div>
       </div>
     )
