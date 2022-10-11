@@ -1,27 +1,31 @@
 import { FallOutlined, RiseOutlined } from '@ant-design/icons';
 import { Drawer, List, Tag } from 'antd';
 import { Component, Fragment } from 'react';
-import { fetch, getAccountIcon } from '../config/Util';
+import { AccountTypeDict, fetch, getAccountIcon } from '../config/Util';
 import AccountAmount from './AccountAmount';
 import AccountIcon from './AccountIcon';
 import Decimal from 'decimal.js';
+import StatisticAmount from './StatisticAmount';
 
 class TagTransactionDrawer extends Component {
 
   state = {
     transactions: [],
+    stats: {},
     loading: false,
   }
 
   componentDidMount() {
     if (this.props.tag) {
       this.handleQueryTagTransaction(this.props.tag)
+      this.handleStatsTagTransaction(this.props.tag)
     }
   }
 
   componentWillReceiveProps(nextProps) {
     if (this.props.tag !== nextProps.tag) {
       this.handleQueryTagTransaction(nextProps.tag)
+      this.handleStatsTagTransaction(nextProps.tag)
     }
   }
 
@@ -48,12 +52,29 @@ class TagTransactionDrawer extends Component {
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
   }
 
+  handleStatsTagTransaction = (tag) => {
+    if (!tag) return;
+    this.setState({ loading: true })
+    fetch(`/api/auth/stats/total?tag=${tag}`)
+      .then((stats) => {
+        this.setState({ stats })
+      }).catch(console.error)
+  }
+
   render() {
     const tag = this.props.tag
-    const { transactions, loading } = this.state
+    const { transactions, stats, loading } = this.state
     return (
       <Drawer
-        title={<div style={{ fontSize: 14 }}><div>标签：{tag}</div><div>最近{transactions.length}条交易记录</div></div>}
+        title={
+          <div style={{ fontSize: 14 }}>
+            <div>标签：{tag}</div>
+            <div>最近{transactions.length}条交易记录
+            {stats.Expenses && `，${AccountTypeDict['Expenses']}${AccountAmount('Expenses:', stats.Expenses)}`}
+            {stats.Income && `，${AccountTypeDict['Income']}${AccountAmount('Income:', stats.Income)}`}
+            {stats.Liabilities && `，${AccountTypeDict['Liabilities']}${AccountAmount('Liabilities:', stats.Liabilities)}`}</div>
+          </div>
+        }
         placement="bottom"
         closable={true}
         className="page-drawer"

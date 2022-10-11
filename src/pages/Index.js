@@ -1,4 +1,4 @@
-import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined, FallOutlined, RiseOutlined } from '@ant-design/icons';
 import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
@@ -99,8 +99,8 @@ class Index extends Component {
     this.setState({ loading: true })
     fetch(`/api/auth/stats/total?year=${dayjs(this.state.selectedMonth).year()}&month=${dayjs(this.state.selectedMonth).month() + 1}`)
       .then(res => {
-        const { Income = 0, Expenses = 0, Liabilities = 0 } = res;
-        this.setState({ Income, Expenses, Liabilities })
+        const { Income = 0, Expenses = 0, Liabilities = 0, Assets = 0 } = res;
+        this.setState({ Income, Expenses, Liabilities, Assets })
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
   }
 
@@ -196,9 +196,11 @@ class Index extends Component {
         <div className="top-wrapper">
           <div>
             <MonthSelector value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
-            &nbsp;&nbsp;{hideMoney ? <EyeInvisibleOutlined onClick={this.handleHideMoney} /> : <EyeOutlined onClick={this.handleHideMoney} />}
+            &nbsp;&nbsp;{hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
           </div>
           <div>
+            {this.state.Assets > 0 && !hideMoney && <Tag icon={<RiseOutlined />} color="#f50" >月资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
+            {this.state.Assets < 0 && !hideMoney && <Tag icon={<FallOutlined />} color="#1DA57A">月资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
             <Button size="small" icon={<AccountBookOutlined />} onClick={this.handleOpenCalendarDrawer}>日历</Button>&nbsp;&nbsp;
             <Button size="small" icon={<CloudUploadOutlined />} onClick={this.handleNavigateImportPage}>导入</Button>&nbsp;&nbsp;
             <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
@@ -217,17 +219,6 @@ class Index extends Component {
             </Col>
           </Row>
         </div>
-        {/* <div style={{ margin: '30px auto' }}>
-          <Card style={{ width: '100%', marginTop: 16 }} loading={loading}>
-            <Card.Meta
-              avatar={
-                <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-              }
-              title="Card title"
-              description="This is the description"
-            />
-          </Card>
-        </div> */}
         <Tabs centered defaultActiveKey="Expenses" onChange={this.handleChangeEntryType} style={{ marginTop: '1rem' }}>
           <TabPane tab="收入明细" key="Income">
             <TransactionList
