@@ -122,7 +122,6 @@ class AddTransactionDrawer extends Component {
   }
 
   handleSubmit = (values) => {
-    this.setState({ loading: true })
     const { divideCount, divideCycle } = values
     if (divideCount && divideCount > 0) {
       const date = dayjs(values.date)
@@ -139,6 +138,28 @@ class AddTransactionDrawer extends Component {
       delete values.divideCount
       delete values.divideCycle
     }
+
+    if (!values.entries || !values.entries.length) {
+      message.error("账目不能为空")
+      return
+    }
+
+    let nullCount = 0;
+    let balanceEntry;
+    for (let entry of values.entries) {
+      if (!entry || !entry.number) {
+        balanceEntry = entry
+        nullCount++;
+      }
+    }
+    if (nullCount == 1) {
+      balanceEntry.number = String(this.computeBalanceAmount(values))
+    } else if (nullCount > 1) {
+      message.error("账目金额项不能为空")
+      return
+    }
+
+    this.setState({ loading: true })
     fetch('/api/auth/transaction', { method: 'POST', body: values })
       .then(res => {
         message.success('添加成功')
@@ -156,6 +177,20 @@ class AddTransactionDrawer extends Component {
           this.props.onSubmit(values)
         }
       }).finally(() => { this.setState({ loading: false }) })
+  }
+
+  computeBalanceAmount(values) {
+    let balanceAmount = Decimal(0);
+    values.entries.filter(a => a && a.number).forEach(entryValue => {
+      const { number, commodity, price, priceCommodity } = entryValue
+      if (priceCommodity && priceCommodity !== commodity && number && price) {
+        // 不同币种需要计算税率
+        balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(price)))
+      } else if (number) {
+        balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
+      }
+    })
+    return balanceAmount.toNumber()
   }
 
   handleDeleteTransactionTemplate = (e, id) => {
@@ -274,16 +309,7 @@ class AddTransactionDrawer extends Component {
                         accountCommodity = this.getAccountCommodity(selectAccount.account)
                       }
                       const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
-                      let balanceAmount = null
-                      formEntriesValues.entries.filter(a => a && a.number).forEach(entryValue => {
-                        const { number, commodity, price, priceCommodity } = entryValue
-                        if (priceCommodity && priceCommodity !== commodity && number && price) {
-                          // 不同币种需要计算税率
-                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(price)))
-                        } else if (number) {
-                          balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
-                        }
-                      })
+                      const balanceAmount = this.computeBalanceAmount(formEntriesValues)
                       return (
                         <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
                           <Form.Item
@@ -335,7 +361,6 @@ class AddTransactionDrawer extends Component {
                             <Form.Item
                               name={[field.name, 'number']}
                               fieldKey={[field.fieldKey, 'number']}
-                              rules={[{ required: true, message: '金额' }]}
                               style={{ flex: 1 }}
                             >
                               <Input
