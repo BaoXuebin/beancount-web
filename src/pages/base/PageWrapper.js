@@ -4,7 +4,7 @@ import Config from '../../config/Config';
 import { fetch } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
 import './styles/PageWrapper.css';
-import { WarningOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { WarningOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 
 class PageWrapper extends Component {
@@ -21,7 +21,7 @@ class PageWrapper extends Component {
       this.setState({ version })
     })
     fetch('/api/auth/ledger/check').then((data) => {
-      this.setState({ error: data })
+      this.setState({ error: data || [] })
     })
   }
 
