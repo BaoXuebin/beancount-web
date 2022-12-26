@@ -111,16 +111,6 @@ class Import extends Component {
     this.setState({ payeeAccount, transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
   }
 
-  handleChangePayee = (oldPayee, newPayee) => {
-    const transactions = this.state.transactions.map(d => {
-      if (d.payee === oldPayee) {
-        d.payee = newPayee
-      }
-      return d
-    })
-    this.setState({ transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
-  }
-
   handleChangeDesc = (id, desc) => {
     const transactions = this.state.transactions.map(d => {
       if (d.id === id) {
@@ -133,10 +123,6 @@ class Import extends Component {
 
   handleChangeOriginAccount = (account, item) => {
     const transactions = this.state.transactions.map(transaction => {
-      if ((transaction.payee === item.payee || transaction.desc === item.desc) && !transaction.originAccount) {
-        transaction.originAccount = account
-        transaction.account = account
-      }
       if (transaction.id === item.id) {
         transaction.originAccount = account
         transaction.account = account
@@ -148,10 +134,6 @@ class Import extends Component {
 
   handleChangeTargetAccount = (account, item) => {
     const transactions = this.state.transactions.map(transaction => {
-      if ((transaction.payee === item.payee || transaction.desc === item.desc) && !transaction.targetAccount) {
-        transaction.targetAccount = account
-        transaction.account = account
-      }
       if (transaction.id === item.id) {
         transaction.targetAccount = account
         transaction.account = account
@@ -328,8 +310,8 @@ class Import extends Component {
                         item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
                       }
                       {item.date}&nbsp;
-                      <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{getAccountName(item.account)}</span>
-                      <Input size='small' value={item.payee} onChange={(e) => this.handleChangePayee(item.payee, e.target.value) } style={{ width: '240px', margin: 'auto 10px' }} />
+                      <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{getAccountName(item.account)}</span>&nbsp;
+                      <span>{item.payee}</span>&nbsp;
                       {item.error && <Tag color="red">导入异常</Tag>}
                       <div style={{ marginTop: '10px' }}>
                         <Select
