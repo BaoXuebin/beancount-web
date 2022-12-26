@@ -1,5 +1,5 @@
 import { CloseCircleOutlined, CloseOutlined, DoubleRightOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
-import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload } from 'antd';
+import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload, Pagination } from 'antd';
 import React, { Component } from 'react';
 import AliPayLogo from '../assets/aliPay.png';
 import WxPayLogo from '../assets/wxPay.png';
@@ -13,12 +13,15 @@ import Page from './base/Page';
 class Import extends Component {
 
   theme = this.context.theme
+  cachedData = JSON.parse(localStorage.getItem('transactions') || '[]')
 
   state = {
     loading: false,
     payeeType: 'AliPay',
     payeeAccount: null,
-    transactions: JSON.parse(localStorage.getItem('transactions') || '[]'),
+    transactions: this.cachedData,
+    sliceNo: 1,
+    sliceSize: 10,
     accounts: [],
     tags: []
   }
@@ -188,6 +191,10 @@ class Import extends Component {
     this.setState({ transactions: this.state.transactions.filter(t => t.id !== item.id) }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
   }
 
+  handleChangePage = (current, size) => {
+    this.setState({ sliceNo: current, sliceSize: size })
+  }
+
   handleClearTransaction = () => {
     Modal.confirm({
       title: '确认清除交易列表？',
@@ -229,6 +236,7 @@ class Import extends Component {
   }
 
   render() {
+    const sliceTransactions = this.state.transactions.slice((this.state.sliceNo - 1) * this.state.sliceSize, this.state.sliceNo * this.state.sliceSize)
     return (
       <div className="import-page page">
         <div>
@@ -291,7 +299,7 @@ class Import extends Component {
               </div>
             }
             itemLayout="horizontal"
-            dataSource={this.state.transactions}
+            dataSource={sliceTransactions}
             rowKey={record => record.id}
             renderItem={item => (
               <List.Item
@@ -303,7 +311,7 @@ class Import extends Component {
               >
                 <List.Item.Meta
                   avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                  title={<Input size='small' value={item.desc} onChange={(e) => this.handleChangeDesc(item.id, e.target.value) } style={{ width: '240px', margin: 'auto 10px' }} />}
+                  title={<Input size='small' value={item.desc} onChange={(e) => this.handleChangeDesc(item.id, e.target.value)} style={{ width: '240px', margin: 'auto 10px' }} />}
                   description={
                     <div>
                       {
@@ -371,6 +379,9 @@ class Import extends Component {
               </List.Item>
             )}
           />
+        </div>
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+          <Pagination size="small" total={this.state.transactions.length} onShowSizeChange={this.handleChangePage} onChange={this.handleChangePage} />
         </div>
       </div>
     )
