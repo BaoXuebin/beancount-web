@@ -3,6 +3,8 @@ import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload, Pagin
 import React, { Component } from 'react';
 import AliPayLogo from '../assets/aliPay.png';
 import WxPayLogo from '../assets/wxPay.png';
+import ICBCLogo from '../assets/icbc.png';
+import ABCLogo from '../assets/abc.png';
 import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
 import { fetch, getAccountIcon, getAccountName } from '../config/Util';
@@ -54,6 +56,10 @@ class Import extends Component {
       return '/api/auth/import/alipay'
     } else if (this.state.payeeType === 'WxPay') {
       return '/api/auth/import/wx'
+    } else if (this.state.payeeType === 'ICBC') {
+      return '/api/auth/import/icbc'
+    } else if (this.state.payeeType === 'ABC') {
+      return '/api/auth/import/abc'
     }
     return ''
   }
@@ -64,6 +70,12 @@ class Import extends Component {
     }
     if (this.state.payeeType === 'WxPay') {
       return '微信'
+    }
+    if (this.state.payeeType === 'ICBC') {
+      return '工商银行'
+    }
+    if (this.state.payeeType === 'ABC') {
+      return '农业银行'
     }
     return ''
   }
@@ -229,6 +241,21 @@ class Import extends Component {
               <p>3. 点击下载账单，选择用于个人对账</p>
             </div>
           }
+          {
+            this.state.payeeType === 'ICBC' &&
+            <div>
+              <p>1. 登录工商银行官网（http://www.icbc.com.cn/）</p>
+              <p>2. 点击：我的账户>>银行卡明细>>下载（Excel格式）</p>
+            </div>
+          }
+          {
+            this.state.payeeType === 'ABC' &&
+            <div>
+              <p>1. 登录农业银行官网（https://www.abchina.com/）</p>
+              <p>2. 点击：我的账户>>下载（Excel格式）</p>
+              <p>3. 将下载得到的 excel 转换成 csv，字符格式需要指定为 UTF-8</p>
+            </div>
+          }
         </div>
       ),
       okText: "知道了"
@@ -254,6 +281,20 @@ class Import extends Component {
                   <Avatar size="small" src={WxPayLogo} />
                   &nbsp;
                   微信
+                </div>
+              </Select.Option>
+              <Select.Option key="ICBC" value="ICBC">
+                <div>
+                  <Avatar size="small" src={ICBCLogo} />
+                  &nbsp;
+                  工商银行
+                </div>
+              </Select.Option>
+              <Select.Option key="ABC" value="ABC">
+                <div>
+                  <Avatar size="small" src={ABCLogo} />
+                  &nbsp;
+                  农业银行
                 </div>
               </Select.Option>
             </Select>
