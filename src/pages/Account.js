@@ -283,7 +283,7 @@ class Account extends Component {
             </Button>
             &nbsp;&nbsp;
             <Button size="small" loading={this.state.refreshLoading} icon={<Loading3QuartersOutlined />} onClick={this.handleRefreshAccountCache}>
-              刷新缓存
+              刷新
             </Button>
           </div>
           <div>
@@ -374,7 +374,7 @@ class Account extends Component {
                 >
                   <Input
                     placeholder="账户名称，如 ICBC:工商银行"
-                    addonAfter={<AccountIcon iconType={getAccountIcon(iconType)} />}
+                    addonBefore={selectedAccountType}
                     onChange={this.handleEditAccountInput}
                   />
                 </Form.Item>
