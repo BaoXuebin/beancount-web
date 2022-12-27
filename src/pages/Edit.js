@@ -81,14 +81,14 @@ class Edit extends Component {
           <Button
             type="primary"
             icon={<SaveOutlined />}
-            disabled={this.state.rawContent === this.state.content}
+            disabled={this.state.rawContent === this.state.content || !this.state.path}
             loading={this.state.loading}
             onClick={this.saveFileContent}
           >保存</Button>
         </div>
         <div style={{ marginTop: '1rem' }}>
           <Editor
-            placeholder="未选择文件"
+            placeholder={this.state.path ? "该文件内容为空" : "未选择源文件"}
             editorState={this.state.editorState}
             onChange={this.handldEditContent}
           />
