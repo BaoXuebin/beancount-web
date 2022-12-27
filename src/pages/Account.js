@@ -1,5 +1,5 @@
 import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined } from '@ant-design/icons';
-import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload } from 'antd';
+import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload, Spin } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component } from 'react';
@@ -34,42 +34,45 @@ const AccountList = ({ loading, accounts, onEdit, commodity }) => {
     }
   })
   return (
-    <Collapse ghost>
-      {
-        Object.values(groupByAccountsDict).map(groupByAccount => {
-          const totalAmount = groupByAccount.children.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
-          return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (${commodity.symbol}${Math.abs(totalAmount)})`}>
-            <List
-              loading={loading}
-              itemLayout="horizontal"
-              dataSource={groupByAccount.children}
-              renderItem={item => {
-                const actions = []
-                if (item.marketNumber) {
-                  actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
-                }
-                if (item.loading) {
-                  actions.push(<LoadingOutlined />)
-                } else {
-                  actions.push(<a key="list-delete" onClick={() => { onEdit(item, !item.marketCurrency || (item.marketCurrency && (item.currency === item.marketCurrency))) }}>操作</a>)
-                }
-                return (
-                  <List.Item
-                    actions={actions}
-                  >
-                    <List.Item.Meta
-                      avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                      title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
-                      description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.currency || ''}`}
-                    />
-                  </List.Item>
-                )
-              }}
-            />
-          </Panel>
-        })
-      }
-    </Collapse>
+    <Spin spinning={loading} tip="加载中...">
+      <div style={{ minHeight: '240px' }}>
+        <Collapse ghost>
+          {
+            Object.values(groupByAccountsDict).map(groupByAccount => {
+              const totalAmount = groupByAccount.children.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
+              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (${commodity.symbol}${Math.abs(totalAmount)})`}>
+                <List
+                  itemLayout="horizontal"
+                  dataSource={groupByAccount.children}
+                  renderItem={item => {
+                    const actions = []
+                    if (item.marketNumber) {
+                      actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
+                    }
+                    if (item.loading) {
+                      actions.push(<LoadingOutlined />)
+                    } else {
+                      actions.push(<a key="list-delete" onClick={() => { onEdit(item, !item.marketCurrency || (item.marketCurrency && (item.currency === item.marketCurrency))) }}>操作</a>)
+                    }
+                    return (
+                      <List.Item
+                        actions={actions}
+                      >
+                        <List.Item.Meta
+                          avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                          title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
+                          description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.currency || ''}`}
+                        />
+                      </List.Item>
+                    )
+                  }}
+                />
+              </Panel>
+            })
+          }
+        </Collapse>
+      </div>
+    </Spin>
   )
 }
 
@@ -300,7 +303,7 @@ class Account extends Component {
           placement="bottom"
           closable={true}
           onClose={this.handleCloseDrawer}
-          visible={drawerVisible}
+          open={drawerVisible}
           height="540"
           className="page-drawer"
           bodyStyle={{ display: 'flex', justifyContent: 'center' }}
@@ -419,7 +422,7 @@ class Account extends Component {
             placement="bottom"
             closable={true}
             onClose={this.handleCloseBalanceDrawer}
-            visible={balanceDrawerVisible}
+            open={balanceDrawerVisible}
             className="page-drawer"
             height="60vh"
             bodyStyle={{ display: 'flex', justifyContent: 'center' }}
@@ -454,7 +457,7 @@ class Account extends Component {
             placement="bottom"
             closable={true}
             onClose={this.handleCloseAccountDrawer}
-            visible={accountDrawerVisible}
+            open={accountDrawerVisible}
             className="page-drawer"
             height="60vh"
             bodyStyle={{ display: 'flex', justifyContent: 'center' }}
