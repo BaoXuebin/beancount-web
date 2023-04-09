@@ -1,5 +1,6 @@
-import { Alert, Button, Form, Input, Spin, Switch } from 'antd';
-import React, { Component } from 'react';
+import { Alert, Button, Form, Input, Spin, Switch, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import React, { Component, Fragment } from 'react';
 import { fetch } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
@@ -87,7 +88,14 @@ class Init extends Component {
               onFinish={this.handleSubmitServerConfig}
               validateMessages={validateMessages}
             >
-              <Form.Item label="账本存储位置" name="dataPath" initialValue={this.state.config.dataPath} rules={[{ required: true }]}>
+              <Form.Item label={
+                <Fragment>
+                  <span>账本存储位置</span>&nbsp;
+                  <Tooltip title="如果是docker容器部署，此处默认为：/data/beancount">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                </Fragment>
+              } name="dataPath" initialValue={this.state.config.dataPath} rules={[{ required: true }]}>
                 <Input placeholder="账本存储位置" />
               </Form.Item>
               <Form.Item label="账本开始日期" name="startDate" initialValue={this.state.config.startDate} rules={[{ required: true }]}>
@@ -102,7 +110,14 @@ class Init extends Component {
               <Form.Item label="修改源文件时是否备份数据" name="isBak" valuePropName="checked" initialValue={this.state.config.isBak}>
                 <Switch />
               </Form.Item>
-              <Form.Item label="密钥" name="secret" rules={[{ required: true }]}>
+              <Form.Item label={
+                <Fragment>
+                  <span>密钥</span>&nbsp;
+                  <Tooltip title="可以在启动日志中查看">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                </Fragment>
+              } name="secret" rules={[{ required: true }]}>
                 <Input.Password placeholder="密钥" />
               </Form.Item>
               <Form.Item>
