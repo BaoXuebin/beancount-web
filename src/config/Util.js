@@ -59,7 +59,7 @@ export const fetch = (url, { method, headers, body, hintError } = {}) => {
             message.error("密码错误")
           } else if (code === 1007) {
             message.error("账户已存在")
-          }  else if (code === 1008) {
+          } else if (code === 1008) {
             message.error("密钥不匹配")
           } else if (code === 1010) {
             window.location.href = '/web/#/ledger';
@@ -76,3 +76,19 @@ export const fetch = (url, { method, headers, body, hintError } = {}) => {
 }
 
 export const getCurrentMonth = () => dayjs().format('YYYY-M')
+
+
+export const getDaysInMonth = (year, month) => {
+  const daysOfMonth = [];
+  month = parseInt(month, 10);
+  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  const monthStr = month < 10 ? ('0' + month) : month
+  for (let i = 1; i <= lastDayOfMonth; i++) {
+    if (i < 10) {
+      daysOfMonth.push(year + "-" + monthStr + "-" + "0" + i);
+    } else {
+      daysOfMonth.push(year + "-" + monthStr + "-" + i);
+    }
+  }
+  return daysOfMonth;
+}

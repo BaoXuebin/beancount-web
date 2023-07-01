@@ -1,5 +1,5 @@
-import { CloseCircleOutlined, CloseOutlined, DoubleRightOutlined, ExclamationCircleOutlined, UploadOutlined } from '@ant-design/icons';
-import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload, Pagination } from 'antd';
+import { CloseCircleOutlined, CloseOutlined, DoubleRightOutlined, ExclamationCircleOutlined, OrderedListOutlined, UploadOutlined } from '@ant-design/icons';
+import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload, Pagination, Tooltip } from 'antd';
 import React, { Component } from 'react';
 import AliPayLogo from '../assets/aliPay.png';
 import WxPayLogo from '../assets/wxPay.png';
@@ -7,7 +7,7 @@ import ICBCLogo from '../assets/icbc.png';
 import ABCLogo from '../assets/abc.png';
 import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
-import { fetch, getAccountIcon, getAccountName } from '../config/Util';
+import { fetch, getAccountIcon, getAccountName, getDaysInMonth } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 
@@ -16,6 +16,7 @@ class Import extends Component {
 
   theme = this.context.theme
   cachedData = JSON.parse(localStorage.getItem('transactions') || '[]')
+  dateTransactionMap = new Map()
 
   state = {
     loading: false,
@@ -168,15 +169,58 @@ class Import extends Component {
     this.setState({ transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
   }
 
-  handleImport = () => {
-    const data = this.state.transactions.map(transaction => {
-      if (!transaction.originAccount || !transaction.targetAccount) {
-        return null;
+  nonDuplicate = async () => {
+    const result = []
+
+    const transactions = this.state.transactions
+      .map(transaction => {
+        delete transaction.error
+        if (!transaction.originAccount || !transaction.targetAccount) {
+          transaction.error = "交易不完整"
+        }
+        return transaction
+      })
+
+    for (let i = 0; i < transactions.length; i++) {
+      const transaction = transactions[i]
+      let dateTransactions = this.dateTransactionMap[transaction.date]
+      if (!dateTransactions) {
+        const year = transaction.date.split('-')[0]
+        const month = transaction.date.split('-')[1]
+        await fetch(`/api/auth/transaction?year=${year}&month=${month}`)
+          .then(transactionList => {
+            transactionList.forEach(transaction => {
+              const date = transaction.date;
+              const transactionGroup = this.dateTransactionMap[date]
+              if (transactionGroup) {
+                transactionGroup.push(this.hashTransaction(transaction))
+              } else {
+                this.dateTransactionMap[date] = [this.hashTransaction(transaction)]
+              }
+            })
+            const days = getDaysInMonth(year, month)
+            for (let day of days) {
+              if (!this.dateTransactionMap[day]) {
+                this.dateTransactionMap[day] = []
+              }
+            }
+          }).catch(console.error)
+        dateTransactions = this.dateTransactionMap[transaction.date]
       }
+      if (dateTransactions && dateTransactions.indexOf(this.hashTransaction(transaction)) < 0) {
+        result.push(transaction)
+      } else {
+        transaction.error = "重复交易"
+      }
+    }
+
+    this.setState({ transactions })
+
+    return result.filter(r => !r.error).map(transaction => {
       return {
         date: transaction.date,
         payee: transaction.payee,
-        Desc: transaction.desc,
+        desc: transaction.desc,
         tags: transaction.tags,
         entries: [
           { account: transaction.originAccount, number: transaction.originNumber },
@@ -184,14 +228,27 @@ class Import extends Component {
         ]
       }
     })
+  }
+
+  hashTransaction = (transaction) => {
+    return transaction.date + transaction.payee + (transaction.desc || '').trim()
+  }
+
+  hashNoDateTransaction = (transaction) => {
+    return transaction.payee + (transaction.desc || '').trim()
+  }
+
+  handleImport = () => {
     this.setState({ loading: true })
-    fetch('/api/auth/transaction/batch', { method: 'POST', body: data.filter(d => d) })
-      .then(data => {
+    this.nonDuplicate()
+      .then(body => {
+        return fetch('/api/auth/transaction/batch', { method: 'POST', body })
+      }).then(data => {
         const transactions = this.state.transactions.filter(t => {
           const key = t.date + t.payee + t.desc
           return data.indexOf(key) < 0
         }).map(t => {
-          t.error = true
+          t.error = t.error || '导入异常'
           return t
         })
         this.setState({ transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
@@ -260,6 +317,20 @@ class Import extends Component {
       ),
       okText: "知道了"
     });
+  }
+
+  handleBatchSyncSamePayee = (item) => {
+    const { tags, account, targetAccount, originAccount } = item
+    const transactions = this.state.transactions.map(transaction => {
+      if (transaction.payee === item.payee) {
+        transaction.tags = tags
+        transaction.account = account
+        transaction.originAccount = originAccount
+        transaction.targetAccount = targetAccount
+      }
+      return transaction
+    })
+    this.setState({ transactions }, () => { localStorage.setItem('transactions', JSON.stringify(this.state.transactions)) })
   }
 
   render() {
@@ -342,83 +413,93 @@ class Import extends Component {
             itemLayout="horizontal"
             dataSource={sliceTransactions}
             rowKey={record => record.id}
-            renderItem={item => (
-              <List.Item
-                key={item.id}
-                actions={[
-                  item.number ? <div>{AccountAmount(item.account, item.number, item.currencySymbol, item.currency)}</div> : '',
-                  <CloseOutlined color='red' onClick={() => { this.handleDeleteTransaction(item) }} />
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
-                  title={<Input size='small' value={item.desc} onChange={(e) => this.handleChangeDesc(item.id, e.target.value)} style={{ width: '240px', margin: 'auto 10px' }} />}
-                  description={
-                    <div>
-                      {
-                        item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
-                      }
-                      {item.date}&nbsp;
-                      <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{getAccountName(item.account)}</span>&nbsp;
-                      <span>{item.payee}</span>&nbsp;
-                      {item.error && <Tag color="red">导入异常</Tag>}
-                      <div style={{ marginTop: '10px' }}>
-                        <Select
-                          showSearch
-                          value={item.originAccount}
-                          size="small"
-                          placeholder="选择账户"
-                          optionFilterProp="children"
-                          onChange={(acc) => { this.handleChangeOriginAccount(acc, item) }}
-                          style={{ marginRight: '10px', width: '240px' }}
-                        >
-                          {
-                            this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
-                              <AccountIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
-                              {account.account}
-                            </Select.Option>)
-                          }
-                        </Select>
-                        <DoubleRightOutlined />
-                        <Select
-                          showSearch
-                          value={item.targetAccount}
-                          size="small"
-                          placeholder="选择账户"
-                          optionFilterProp="children"
-                          onChange={(acc) => { this.handleChangeTargetAccount(acc, item) }}
-                          style={{ marginLeft: '10px', width: '240px' }}
-                        >
-                          {
-                            this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
-                              <AccountIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
-                              {account.account}
-                            </Select.Option>)
-                          }
-                        </Select>
+            renderItem={item => {
+              const samePayeeCount = this.state.transactions.filter(t => t.payee == item.payee).length
+              return (
+                <List.Item
+                  key={item.id}
+                  actions={[
+                    item.number ? <div>{AccountAmount(item.account, item.number, item.currencySymbol, item.currency)}</div> : '',
+                    samePayeeCount > 1 && <Tooltip title={`批量更新该商家其他${samePayeeCount - 1}个交易`}>
+                      <DoubleRightOutlined color='red' onClick={() => { this.handleBatchSyncSamePayee(item) }} />
+                    </Tooltip>,
+                    <Tooltip title="删除交易">
+                      <CloseOutlined color='red' onClick={() => { this.handleDeleteTransaction(item) }} />
+                    </Tooltip>
+                    ,
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
+                    title={<Input size='small' value={item.desc} onChange={(e) => this.handleChangeDesc(item.id, e.target.value)} style={{ width: '240px', margin: 'auto 10px' }} />}
+                    description={
+                      <div>
+                        {
+                          item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
+                        }
+                        {item.date}&nbsp;
+                        <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{getAccountName(item.account)}</span>&nbsp;
+                        <span>{item.payee}</span>&nbsp;
+                        {item.error && <Tag color="red">{item.error}</Tag>}
+                        <div style={{ marginTop: '10px' }}>
+                          <Select
+                            showSearch
+                            value={item.originAccount}
+                            size="small"
+                            placeholder="选择账户"
+                            optionFilterProp="children"
+                            onChange={(acc) => { this.handleChangeOriginAccount(acc, item) }}
+                            style={{ marginRight: '10px', width: '240px' }}
+                          >
+                            {
+                              this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
+                                <AccountIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
+                                {account.account}
+                              </Select.Option>)
+                            }
+                          </Select>
+                          <DoubleRightOutlined />
+                          <Select
+                            showSearch
+                            value={item.targetAccount}
+                            size="small"
+                            placeholder="选择账户"
+                            optionFilterProp="children"
+                            onChange={(acc) => { this.handleChangeTargetAccount(acc, item) }}
+                            style={{ marginLeft: '10px', width: '240px' }}
+                          >
+                            {
+                              this.state.accounts.map(account => <Select.Option key={account.account} value={account.account}>
+                                <AccountIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
+                                {account.account}
+                              </Select.Option>)
+                            }
+                          </Select>
+                        </div>
+                        <div style={{ marginTop: '10px' }}>
+                          <Select
+                            showSearch
+                            mode="tags"
+                            size="small"
+                            placeholder="指定标签"
+                            optionFilterProp="children"
+                            onChange={(tags) => { this.handleChangeTags(tags, item) }}
+                            style={{ width: '514px' }}
+                            defaultValue={item.tags || []}
+                          >
+                            {
+                              this.state.tags.map(tag => <Select.Option id={tag} value={tag}>
+                                {tag}
+                              </Select.Option>)
+                            }
+                          </Select>
+                        </div>
                       </div>
-                      <div style={{ marginTop: '10px' }}>
-                        <Select
-                          showSearch
-                          mode="tags"
-                          size="small"
-                          placeholder="指定标签"
-                          optionFilterProp="children"
-                          onChange={(tags) => { this.handleChangeTags(tags, item) }}
-                          style={{ width: '514px' }}
-                        >
-                          {
-                            this.state.tags.map(tag => <Select.Option id={tag} value={tag}>
-                              {tag}
-                            </Select.Option>)
-                          }
-                        </Select>
-                      </div>
-                    </div>
-                  }
-                />
-              </List.Item>
-            )}
+                    }
+                  />
+                </List.Item>
+              )
+            }}
           />
         </div>
         <div style={{ marginTop: '16px', textAlign: 'center' }}>
