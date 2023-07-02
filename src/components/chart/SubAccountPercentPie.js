@@ -2,7 +2,7 @@ import { Input, Select, Spin } from 'antd';
 import { Axis, Chart, Coordinate, Interaction, Interval, Tooltip } from "bizcharts";
 import Decimal from 'decimal.js';
 import React, { Component } from "react";
-import { fetch } from '../../config/Util';
+import { fetch, getCurrentMonth } from '../../config/Util';
 import MonthSelector from '../MonthSelector';
 
 
@@ -12,18 +12,23 @@ class SubAccountPercentPie extends Component {
     loading: false,
     subAccountPercentData: [],
     level: '1',
-    accountPrefix: 'Expenses',
-    selectedMonth: ""
+    accountPrefix: 'Expenses'
   }
 
   componentDidMount() {
-    this.queryStatsSubAccountPercent()
+    this.queryStatsSubAccountPercent(this.props.selectedMonth)
   }
 
-  queryStatsSubAccountPercent = () => {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.selectedMonth !== this.props.selectedMonth) {
+      this.queryStatsSubAccountPercent(nextProps.selectedMonth)
+    }
+  }
+
+  queryStatsSubAccountPercent = (selectedMonth) => {
     this.setState({ loading: true })
     let year, month;
-    const { accountPrefix, level, selectedMonth } = this.state;
+    const { accountPrefix, level } = this.state;
     if (selectedMonth) {
       const yearAndMonth = selectedMonth.split('-').filter(a => a)
       if (yearAndMonth.length === 1) {
@@ -53,20 +58,14 @@ class SubAccountPercentPie extends Component {
     if (e.key === 'Enter') {
       const accountPrefix = this.accountInput.input.value.trim()
       this.setState({ accountPrefix }, () => {
-        this.queryStatsSubAccountPercent()
+        this.queryStatsSubAccountPercent(this.props.selectedMonth)
       })
     }
   }
 
   handleChangeAccountLevel = (level) => {
     this.setState({ level }, () => {
-      this.queryStatsSubAccountPercent()
-    })
-  }
-
-  handleChangeMonth = (selectedMonth) => {
-    this.setState({ selectedMonth }, () => {
-      this.queryStatsSubAccountPercent()
+      this.queryStatsSubAccountPercent(this.props.selectedMonth)
     })
   }
 
@@ -75,9 +74,7 @@ class SubAccountPercentPie extends Component {
       return <div style={{ height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>
     }
     return (
-      <div style={{ marginTop: '1rem' }}>
-        <MonthSelector size="middle" value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
-        &nbsp;
+      <div>
         <Input
           ref={input => this.accountInput = input}
           defaultValue={this.state.accountPrefix}

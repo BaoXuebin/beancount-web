@@ -2,8 +2,6 @@ import { Input, Select, Spin } from 'antd';
 import { Chart, Interval, Tooltip } from "bizcharts";
 import React, { Component } from "react";
 import { fetch } from '../../config/Util';
-import MonthSelector from '../MonthSelector';
-
 
 class AccountDayTrendChart extends Component {
 
@@ -11,18 +9,23 @@ class AccountDayTrendChart extends Component {
     loading: false,
     dayAmountData: [],
     type: 'day',
-    accountPrefix: 'Expenses',
-    selectedMonth: ""
+    accountPrefix: 'Expenses'
   }
 
   componentDidMount() {
-    this.queryAccountDayTrend()
+    this.queryAccountDayTrend(this.props.selectedMonth)
   }
 
-  queryAccountDayTrend = () => {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.selectedMonth !== this.props.selectedMonth) {
+      this.queryAccountDayTrend(nextProps.selectedMonth)
+    }
+  }
+
+  queryAccountDayTrend = (selectedMonth) => {
     this.setState({ loading: true })
     let year, month;
-    const { accountPrefix, selectedMonth, type } = this.state;
+    const { accountPrefix, type } = this.state;
     if (selectedMonth) {
       const yearAndMonth = selectedMonth.split('-').filter(a => a)
       if (yearAndMonth.length === 1) {
@@ -42,20 +45,14 @@ class AccountDayTrendChart extends Component {
     if (e.key === 'Enter') {
       const accountPrefix = this.accountInput.input.value.trim()
       this.setState({ accountPrefix }, () => {
-        this.queryAccountDayTrend()
+        this.queryAccountDayTrend(this.props.selectedMonth)
       })
     }
   }
 
   handleChangeStatsType = (type) => {
     this.setState({ type }, () => {
-      this.queryAccountDayTrend()
-    })
-  }
-
-  handleChangeMonth = (selectedMonth) => {
-    this.setState({ selectedMonth }, () => {
-      this.queryAccountDayTrend()
+      this.queryAccountDayTrend(this.props.selectedMonth)
     })
   }
 
@@ -64,9 +61,7 @@ class AccountDayTrendChart extends Component {
       return <div style={{ height: 480, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>
     }
     return (
-      <div style={{ marginTop: '1rem' }}>
-        <MonthSelector size="middle" value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
-        &nbsp;
+      <div>
         <Input
           ref={input => this.accountInput = input}
           defaultValue={this.state.accountPrefix}

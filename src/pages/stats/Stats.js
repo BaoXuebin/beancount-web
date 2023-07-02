@@ -1,5 +1,5 @@
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
-import { Col, Row, Tabs } from 'antd';
+import { Button, Col, Row, Tabs } from 'antd';
 import React, { Component } from 'react';
 import AccountBalanceChart from '../../components/chart/AccountBalanceChart';
 import AccountDayTrendChart from '../../components/chart/AccountDayTrendChart';
@@ -7,10 +7,12 @@ import IncomeExpensesLineChart from '../../components/chart/IncomeExpensesLineCh
 import PayeeChart from '../../components/chart/PayeeChart';
 import SubAccountPercentPie from '../../components/chart/SubAccountPercentPie';
 import StatisticAmount from '../../components/StatisticAmount';
-import { AccountTypeDict, fetch } from '../../config/Util';
+import { AccountTypeDict, fetch, getCurrentMonth, getLastMonth } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
 import Page from '../base/Page';
 import './styles/stats.css';
+import MonthSelector from '../../components/MonthSelector';
+import dayjs from 'dayjs';
 
 class Stats extends Component {
 
@@ -25,10 +27,12 @@ class Stats extends Component {
     Income: 0,
     Expenses: 0,
     Liabilities: 0,
-    hideMoney: window.localStorage.getItem("hideMoney") || false
+    hideMoney: JSON.parse(window.localStorage.getItem("hideMoney") || 'false'),
+    selectedMonth: dayjs().date() >= 10 ? getCurrentMonth() : getLastMonth()
   }
 
   componentDidMount() {
+    console.log(dayjs().date())
     this.queryStatsTotalAmount()
   }
 
@@ -40,11 +44,28 @@ class Stats extends Component {
 
   queryStatsTotalAmount = () => {
     this.setState({ loading: true })
-    fetch('/api/auth/stats/total')
+    let year = '', month = '';
+    const { selectedMonth } = this.state
+    if (selectedMonth) {
+      const yearAndMonth = selectedMonth.split('-').filter(a => a)
+      if (yearAndMonth.length === 1) {
+        year = yearAndMonth[0]
+      } else if (yearAndMonth.length === 2) {
+        year = yearAndMonth[0]
+        month = yearAndMonth[1]
+      }
+    }
+    fetch(`/api/auth/stats/total?year=${year}&month=${month}`)
       .then(res => {
         const { Income, Expenses, Liabilities, Assets } = res;
         this.setState({ Assets, Income, Expenses, Liabilities })
       }).catch(console.error).finally(() => { this.setState({ loading: false }) })
+  }
+
+  handleChangeMonth = (selectedMonth) => {
+    this.setState({ selectedMonth }, () => {
+      this.queryStatsTotalAmount()
+    })
   }
 
   handleChnageTab = (statsTab) => {
@@ -74,7 +95,11 @@ class Stats extends Component {
 
     return (
       <div className="stats-page">
-        <h1>资产统计{hideMoney ? <EyeInvisibleOutlined onClick={this.handleHideMoney} /> : <EyeOutlined onClick={this.handleHideMoney} />}</h1>
+        <div style={{ textAlign: 'left' }}>
+          <MonthSelector value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
+          &nbsp;&nbsp;{hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
+        </div>
+        <h1>统计</h1>
         <div>
           <Row gutter={16}>
             <Col span={12} offset={6}>
@@ -100,21 +125,21 @@ class Stats extends Component {
             </Col>
           </Row>
         </div>
-        <Tabs defaultActiveKey="1" activeKey={statsTab} centered style={{ marginTop: '2rem' }} onChange={this.handleChnageTab}>
+        <Tabs defaultActiveKey="1" destroyInactiveTabPane activeKey={statsTab} centered style={{ marginTop: '2rem' }} onChange={this.handleChnageTab}>
           <Tabs.TabPane tab="月度收支统计图" key="1">
-            <IncomeExpensesLineChart chartLoading={this.state.chartLoading} />
+            <IncomeExpensesLineChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="资产负债统计" key="2">
-            <AccountBalanceChart chartLoading={this.state.chartLoading} />
+            <AccountBalanceChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="损益账户统计" key="3">
-            <AccountDayTrendChart chartLoading={this.state.chartLoading} />
+            <AccountDayTrendChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="账户分布占比" key="4">
-            <SubAccountPercentPie chartLoading={this.state.chartLoading} />
+            <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="商户消费排行" key="5">
-            <PayeeChart chartLoading={this.state.chartLoading} />
+            <PayeeChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
         </Tabs>
       </div >

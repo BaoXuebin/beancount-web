@@ -76,6 +76,7 @@ export const fetch = (url, { method, headers, body, hintError } = {}) => {
 }
 
 export const getCurrentMonth = () => dayjs().format('YYYY-M')
+export const getLastMonth = () => dayjs().subtract(1, 'month').format('YYYY-M')
 
 
 export const getDaysInMonth = (year, month) => {

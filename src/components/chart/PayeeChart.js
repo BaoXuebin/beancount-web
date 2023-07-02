@@ -1,7 +1,7 @@
 import { Input, Select, Spin } from 'antd';
 import { Chart, Coordinate, Interaction, Interval } from "bizcharts";
 import React, { Component } from "react";
-import { fetch } from '../../config/Util';
+import { fetch, getCurrentMonth } from '../../config/Util';
 import MonthSelector from '../MonthSelector';
 
 class PayeeChart extends Component {
@@ -10,18 +10,23 @@ class PayeeChart extends Component {
     loading: false,
     payee: [],
     type: 'sum',
-    accountPrefix: 'Expenses',
-    selectedMonth: ""
+    accountPrefix: 'Expenses'
   }
 
   componentDidMount() {
-    this.queryPayeeStatsValue()
+    this.queryPayeeStatsValue(this.props.selectedMonth)
   }
 
-  queryPayeeStatsValue = () => {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.selectedMonth !== this.props.selectedMonth) {
+      this.queryPayeeStatsValue(nextProps.selectedMonth)
+    }
+  }
+
+  queryPayeeStatsValue = (selectedMonth) => {
     this.setState({ loading: true })
     let year, month;
-    const { accountPrefix, selectedMonth, type } = this.state;
+    const { accountPrefix, type } = this.state;
     if (selectedMonth) {
       const yearAndMonth = selectedMonth.split('-').filter(a => a)
       if (yearAndMonth.length === 1) {
@@ -42,20 +47,14 @@ class PayeeChart extends Component {
     if (e.key === 'Enter') {
       const accountPrefix = this.accountInput.input.value.trim()
       this.setState({ accountPrefix }, () => {
-        this.queryPayeeStatsValue()
+        this.queryPayeeStatsValue(this.props.selectedMonth)
       })
     }
   }
 
   handleChangeStatsType = (type) => {
     this.setState({ type }, () => {
-      this.queryPayeeStatsValue()
-    })
-  }
-
-  handleChangeMonth = (selectedMonth) => {
-    this.setState({ selectedMonth }, () => {
-      this.queryPayeeStatsValue()
+      this.queryPayeeStatsValue(this.props.selectedMonth)
     })
   }
 
@@ -64,9 +63,7 @@ class PayeeChart extends Component {
       return <div style={{ height: 560, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>
     }
     return (
-      <div style={{ marginTop: '1rem' }}>
-        <MonthSelector size="middle" value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
-        &nbsp;
+      <div>
         <Input
           ref={input => this.accountInput = input}
           defaultValue={this.state.accountPrefix}
