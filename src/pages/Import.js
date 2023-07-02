@@ -1,5 +1,5 @@
 import { CloseCircleOutlined, CloseOutlined, DoubleRightOutlined, ExclamationCircleOutlined, OrderedListOutlined, UploadOutlined } from '@ant-design/icons';
-import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload, Pagination, Tooltip } from 'antd';
+import { Avatar, Button, Input, List, message, Modal, Select, Tag, Upload, Pagination, Tooltip, Checkbox } from 'antd';
 import React, { Component } from 'react';
 import AliPayLogo from '../assets/aliPay.png';
 import WxPayLogo from '../assets/wxPay.png';
@@ -11,6 +11,7 @@ import { fetch, getAccountIcon, getAccountName, getDaysInMonth } from '../config
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 
+import './styles/Import.css'
 
 class Import extends Component {
 
@@ -26,7 +27,8 @@ class Import extends Component {
     sliceNo: 1,
     sliceSize: 10,
     accounts: [],
-    tags: []
+    tags: [],
+    duplicate: true
   }
 
   componentDidMount() {
@@ -170,7 +172,7 @@ class Import extends Component {
   }
 
   nonDuplicate = async () => {
-    const result = []
+    let result = []
 
     const transactions = this.state.transactions
       .map(transaction => {
@@ -181,37 +183,41 @@ class Import extends Component {
         return transaction
       })
 
-    for (let i = 0; i < transactions.length; i++) {
-      const transaction = transactions[i]
-      let dateTransactions = this.dateTransactionMap[transaction.date]
-      if (!dateTransactions) {
-        const year = transaction.date.split('-')[0]
-        const month = transaction.date.split('-')[1]
-        await fetch(`/api/auth/transaction?year=${year}&month=${month}`)
-          .then(transactionList => {
-            transactionList.forEach(transaction => {
-              const date = transaction.date;
-              const transactionGroup = this.dateTransactionMap[date]
-              if (transactionGroup) {
-                transactionGroup.push(this.hashTransaction(transaction))
-              } else {
-                this.dateTransactionMap[date] = [this.hashTransaction(transaction)]
+    if (this.state.duplicate) {
+      for (let i = 0; i < transactions.length; i++) {
+        const transaction = transactions[i]
+        let dateTransactions = this.dateTransactionMap[transaction.date]
+        if (!dateTransactions) {
+          const year = transaction.date.split('-')[0]
+          const month = transaction.date.split('-')[1]
+          await fetch(`/api/auth/transaction?year=${year}&month=${month}`)
+            .then(transactionList => {
+              transactionList.forEach(transaction => {
+                const date = transaction.date;
+                const transactionGroup = this.dateTransactionMap[date]
+                if (transactionGroup) {
+                  transactionGroup.push(this.hashTransaction(transaction))
+                } else {
+                  this.dateTransactionMap[date] = [this.hashTransaction(transaction)]
+                }
+              })
+              const days = getDaysInMonth(year, month)
+              for (let day of days) {
+                if (!this.dateTransactionMap[day]) {
+                  this.dateTransactionMap[day] = []
+                }
               }
-            })
-            const days = getDaysInMonth(year, month)
-            for (let day of days) {
-              if (!this.dateTransactionMap[day]) {
-                this.dateTransactionMap[day] = []
-              }
-            }
-          }).catch(console.error)
-        dateTransactions = this.dateTransactionMap[transaction.date]
+            }).catch(console.error)
+          dateTransactions = this.dateTransactionMap[transaction.date]
+        }
+        if (dateTransactions && dateTransactions.indexOf(this.hashTransaction(transaction)) < 0) {
+          result.push(transaction)
+        } else {
+          transaction.error = "重复交易"
+        }
       }
-      if (dateTransactions && dateTransactions.indexOf(this.hashTransaction(transaction)) < 0) {
-        result.push(transaction)
-      } else {
-        transaction.error = "重复交易"
-      }
+    } else {
+      result = transactions
     }
 
     this.setState({ transactions })
@@ -404,10 +410,19 @@ class Import extends Component {
           <List
             split={false}
             header={
-              <div>
-                <stong>{`共 ${this.state.transactions.length} 条交易记录`}</stong>
-                &nbsp;&nbsp;
-                <Button type='danger' size='small' icon={<CloseCircleOutlined />} onClick={this.handleClearTransaction}>清空</Button>
+              <div className='action-container'>
+                <div>
+                  <Checkbox checked={this.state.duplicate} onChange={() => { this.setState({ duplicate: !this.state.duplicate }) }}>
+                    <Tooltip title="同一天内，商家和描述相同视为同一笔交易">
+                      不导入重复交易
+                    </Tooltip>
+                  </Checkbox>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <stong>{`共 ${this.state.transactions.length} 条交易记录`}</stong>
+                  &nbsp;&nbsp;
+                  <Button type='danger' size='small' icon={<CloseCircleOutlined />} onClick={this.handleClearTransaction}>清空</Button>
+                </div>
               </div>
             }
             itemLayout="horizontal"
