@@ -13,6 +13,7 @@ import Page from '../base/Page';
 import './styles/stats.css';
 import MonthSelector from '../../components/MonthSelector';
 import dayjs from 'dayjs';
+import AccountAmount from '../../components/AccountAmount';
 
 class Stats extends Component {
 
@@ -92,7 +93,9 @@ class Stats extends Component {
     }
 
     const { loading, hideMoney, statsTab } = this.state
-
+    const totalLiabilitiesStr = AccountAmount('Liabilities:', this.state.Liabilities || 0)
+    const totalLiabilitiesVal = Number(totalLiabilitiesStr.substring(1, 100))
+    const totalLiabilitiesPrefix = totalLiabilitiesStr.substring(0, 1)
     return (
       <div className="stats-page">
         <div style={{ textAlign: 'left' }}>
@@ -121,7 +124,7 @@ class Stats extends Component {
               <StatisticAmount hide={hideMoney} title={`累计${AccountTypeDict['Expenses']}`} value={this.state.Expenses || 0} loading={loading} prefix="-" valueStyle={{ color: '#3f8600' }} />
             </Col>
             <Col span={8}>
-              <StatisticAmount hide={hideMoney} title={`累计${AccountTypeDict['Liabilities']}`} value={-this.state.Liabilities || 0} loading={loading} prefix="-" valueStyle={{ color: '#3f8600' }} />
+              <StatisticAmount hide={hideMoney} title={`累计${AccountTypeDict['Liabilities']}`} value={totalLiabilitiesVal} loading={loading} prefix={totalLiabilitiesPrefix} valueStyle={{ color: '#3f8600' }} />
             </Col>
           </Row>
         </div>
