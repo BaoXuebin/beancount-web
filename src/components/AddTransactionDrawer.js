@@ -35,7 +35,7 @@ class AddTransactionDrawer extends Component {
     accounts: [],
     payees: [],
     autoCompletePayees: [],
-    templates: [], // 记账模版
+    templates: this.props.defaultAccounts ? [{ entries: [...this.props.defaultAccounts] }] : [], // 记账模版
     showTag: false,
     tags: [],
     isDivide: false,
@@ -43,12 +43,29 @@ class AddTransactionDrawer extends Component {
 
   componentDidMount() {
     // 延迟一秒请求
-    setTimeout(() => {
+    if (this.props.visible) {
+      setTimeout(() => {
+        this.queryAllValidAccounts()
+        this.queryLatest100Payees()
+        this.queryTransactionTemplates()
+        this.queryAllTags()
+      }, 1000)
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.visible && !this.loaded) {
       this.queryAllValidAccounts()
       this.queryLatest100Payees()
       this.queryTransactionTemplates()
       this.queryAllTags()
-    }, 1000)
+      this.loaded = true
+    }
+    if (this.formRef.current
+      && nextProps.defaultAccounts && nextProps.defaultAccounts.length > 0
+      && (!this.props.defaultAccounts || nextProps.defaultAccounts[0].account !== this.props.defaultAccounts[0].account)) {
+      this.formRef.current.setFieldsValue({ entries: [...nextProps.defaultAccounts] })
+    }
   }
 
   queryAllValidAccounts = () => {
@@ -224,6 +241,7 @@ class AddTransactionDrawer extends Component {
         height="90vh"
         className="page-drawer"
         bodyStyle={{ display: 'flex', justifyContent: 'center' }}
+        forceRender
         {
         ...this.props
         }

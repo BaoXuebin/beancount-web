@@ -1,5 +1,5 @@
-import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined } from '@ant-design/icons';
-import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload, Spin } from 'antd';
+import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined, EllipsisOutlined, EditOutlined } from '@ant-design/icons';
+import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload, Spin, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component } from 'react';
@@ -13,6 +13,7 @@ import { fetch, getAccountCata, getAccountIcon, getAccountName } from '../config
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 import './styles/Account.css';
+import AddTransactionDrawer from '../components/AddTransactionDrawer';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -21,7 +22,7 @@ const validateMessages = {
   required: '${label} 不能为空！'
 };
 
-const AccountList = ({ loading, accounts, onEdit, commodity }) => {
+const AccountList = ({ loading, accounts, onEdit, commodity, onAddTransaction }) => {
   const groupByAccountsDict = {}
   accounts.forEach(acc => {
     const typeKey = acc.type.key;
@@ -52,7 +53,8 @@ const AccountList = ({ loading, accounts, onEdit, commodity }) => {
                     if (item.loading) {
                       actions.push(<LoadingOutlined />)
                     } else {
-                      actions.push(<a key="list-delete" onClick={() => { onEdit(item, !item.marketCurrency || (item.marketCurrency && (item.currency === item.marketCurrency))) }}>操作</a>)
+                      actions.push(<Tooltip title="新增交易"><EditOutlined key="list-more" onClick={() => { onAddTransaction(item) }} /></Tooltip>)
+                      actions.push(<Tooltip title="更多操作"><SettingOutlined key="list-more" onClick={() => { onEdit(item, !item.marketCurrency || (item.marketCurrency && (item.currency === item.marketCurrency))) }} /></Tooltip>)
                     }
                     return (
                       <List.Item
@@ -102,6 +104,8 @@ class Account extends Component {
     editAccountDiffCommodity: false,
     refreshLoading: false,
     commodityPriceDrawerVisible: false,
+    addTransactionAccount: null,
+    addTransactionDrawerVisible: false,
   }
 
   componentDidMount() {
@@ -256,6 +260,15 @@ class Account extends Component {
     this.setState({ commodityPriceDrawerVisible: false })
   }
 
+  handleOpenAddTransactionDrawer = (item) => {
+    console.log(item)
+    this.setState({ addTransactionDrawerVisible: true, addTransactionAccount: { account: item.account, currency: item.currency } })
+  }
+
+  handleCloseAddTransactionDrawer = () => {
+    this.setState({ addTransactionDrawerVisible: false, addTransactionAccount: null })
+  }
+
   handleRefreshAccountCache = () => {
     this.setState({ refreshLoading: true })
     fetch('/api/auth/account/refresh', { method: 'POST' })
@@ -265,6 +278,10 @@ class Account extends Component {
         this.queryAllAccountTypes()
       })
       .finally(() => { this.setState({ refreshLoading: false }) })
+  }
+
+  handleAfterAddTransaction = () => {
+    console.log('add')
   }
 
   render() {
@@ -400,19 +417,19 @@ class Account extends Component {
         <div>
           <Tabs defaultActiveKey="Assets">
             <TabPane tab="资产账户" key="1">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="收入账户" key="Income">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="支出账户" key="Expenses">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="负债账户" key="Liabilities">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="权益账户" key="Equity">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} />
+              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
           </Tabs>
         </div>
@@ -509,6 +526,15 @@ class Account extends Component {
         <CommodityPriceChartDrawer
           visible={this.state.commodityPriceDrawerVisible}
           onClose={this.handleCloseCommodityPriceDrawer}
+        />
+        <AddTransactionDrawer
+          {...this.props}
+          defaultAccounts={
+            this.state.addTransactionAccount ? [this.state.addTransactionAccount] : null
+          }
+          visible={this.state.addTransactionDrawerVisible}
+          onClose={this.handleCloseAddTransactionDrawer}
+          onSubmit={this.handleAfterAddTransaction}
         />
       </div >
     );
