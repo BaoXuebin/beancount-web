@@ -33,7 +33,6 @@ class Stats extends Component {
   }
 
   componentDidMount() {
-    console.log(dayjs().date())
     this.queryStatsTotalAmount()
   }
 

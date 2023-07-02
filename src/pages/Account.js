@@ -261,7 +261,6 @@ class Account extends Component {
   }
 
   handleOpenAddTransactionDrawer = (item) => {
-    console.log(item)
     this.setState({ addTransactionDrawerVisible: true, addTransactionAccount: { account: item.account, currency: item.currency } })
   }
 
@@ -281,7 +280,7 @@ class Account extends Component {
   }
 
   handleAfterAddTransaction = () => {
-    console.log('add')
+    this.handleCloseAddTransactionDrawer()
   }
 
   render() {

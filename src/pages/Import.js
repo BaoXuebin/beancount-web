@@ -450,7 +450,7 @@ class Import extends Component {
                     description={
                       <div>
                         {
-                          item.tags && <div>{item.tags.map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
+                          item.tags && <div>{(item.tags || []).map(t => <a style={{ marginRight: '4px' }}>#{t}</a>)}</div>
                         }
                         {item.date}&nbsp;
                         <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>{getAccountName(item.account)}</span>&nbsp;

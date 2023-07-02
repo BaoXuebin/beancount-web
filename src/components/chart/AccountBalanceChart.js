@@ -44,7 +44,7 @@ class AccountBalanceChart extends Component {
       startDate = moment(year).startOf("year")
       endDate = moment(year).endOf("year")
     }
-    fetch(`/api/auth/stats/account/balance?prefix=${accountPrefix}&year=${year}&month=${month}`)
+    fetch(`/api/auth/stats/account/balance?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}`)
       .then(balanceData => {
         let data = balanceData
         if (startDate && endDate) {
@@ -61,7 +61,6 @@ class AccountBalanceChart extends Component {
     if (e.key === 'Enter') {
       const accountPrefix = this.accountInput.input.value.trim()
       this.setState({ accountPrefix }, () => {
-        console.log(this.props.selectedMonth)
         this.queryAccountBalance(this.props.selectedMonth)
       })
     }

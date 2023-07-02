@@ -17,7 +17,6 @@ class AccountSyncPriceDrawer extends Component {
 
   handleSyncPriceAccount = (formValue) => {
     const editAccount = this.props.account;
-    console.log(editAccount)
     if (!editAccount) return;
     this.setState({ loading: true })
     fetch('/api/auth/commodity/price', { method: 'POST', body: { commodity: editAccount.currency, ...formValue } })
