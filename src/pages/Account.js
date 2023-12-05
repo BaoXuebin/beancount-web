@@ -1,4 +1,4 @@
-import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined, EllipsisOutlined, EditOutlined } from '@ant-design/icons';
+import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined, EyeInvisibleOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload, Spin, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -22,7 +22,7 @@ const validateMessages = {
   required: '${label} 不能为空！'
 };
 
-const AccountList = ({ loading, accounts, onEdit, commodity, onAddTransaction }) => {
+const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTransaction }) => {
   const groupByAccountsDict = {}
   accounts.forEach(acc => {
     const typeKey = acc.type.key;
@@ -47,8 +47,16 @@ const AccountList = ({ loading, accounts, onEdit, commodity, onAddTransaction })
                   dataSource={groupByAccount.children}
                   renderItem={item => {
                     const actions = []
-                    if (item.marketNumber) {
-                      actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
+                    if (hideMoney) {
+                      actions.push("***")
+                    } else if (item.marketNumber) {
+                      const positions = item.positions.filter(p => p.currency !== item.marketCurrency)
+                      if (positions.length > 0) {
+                        actions.push(<span>{positions.map(p => AccountAmount(item.account, p.number, p.currencySymbol))}</span>)
+                        actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
+                      } else {
+                        actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
+                      }
                     }
                     if (item.loading) {
                       actions.push(<LoadingOutlined />)
@@ -63,7 +71,11 @@ const AccountList = ({ loading, accounts, onEdit, commodity, onAddTransaction })
                         <List.Item.Meta
                           avatar={<AccountIcon iconType={getAccountIcon(item.account)} />}
                           title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
-                          description={`${item.startDate}${item.endDate ? '~' + item.endDate : ''} ${item.currency || ''}`}
+                          description={
+                            <div>
+                              {item.startDate}{item.endDate ? '~' + item.endDate : ''} {item.currency || ''}
+                            </div>
+                          }
                         />
                       </List.Item>
                     )
@@ -106,6 +118,7 @@ class Account extends Component {
     commodityPriceDrawerVisible: false,
     addTransactionAccount: null,
     addTransactionDrawerVisible: false,
+    hideMoney: JSON.parse(window.localStorage.getItem("hideMoney") || 'false'),
   }
 
   componentDidMount() {
@@ -127,6 +140,12 @@ class Account extends Component {
       .then(accountTypes => {
         this.setState({ accountTypes })
       }).catch(console.error).finally(() => { this.setState({ fetchAccountTypeloading: false }) })
+  }
+
+  handleHideMoney = () => {
+    const hideMoney = !this.state.hideMoney
+    this.setState({ hideMoney })
+    window.localStorage.setItem('hideMoney', hideMoney)
   }
 
   handleChangeAccountType = (selectedAccountType) => {
@@ -301,6 +320,8 @@ class Account extends Component {
             <Button size="small" loading={this.state.refreshLoading} icon={<Loading3QuartersOutlined />} onClick={this.handleRefreshAccountCache}>
               刷新
             </Button>
+            &nbsp;&nbsp;
+            {this.state.hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
           </div>
           <div>
             <Button type="text" size="small" icon={<SlidersOutlined />} onClick={() => { this.setState({ commodityPriceDrawerVisible: true }) }}>
@@ -416,19 +437,19 @@ class Account extends Component {
         <div>
           <Tabs defaultActiveKey="Assets">
             <TabPane tab="资产账户" key="1">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
+              <AccountList loading={loading} {...this.props} hideMoney={this.state.hideMoney} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Assets")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="收入账户" key="Income">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
+              <AccountList loading={loading} {...this.props} hideMoney={this.state.hideMoney} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Income")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="支出账户" key="Expenses">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
+              <AccountList loading={loading} {...this.props} hideMoney={this.state.hideMoney} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Expenses")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="负债账户" key="Liabilities">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
+              <AccountList loading={loading} {...this.props} hideMoney={this.state.hideMoney} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Liabilities")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
             <TabPane tab="权益账户" key="Equity">
-              <AccountList loading={loading} {...this.props} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
+              <AccountList loading={loading} {...this.props} hideMoney={this.state.hideMoney} accounts={accounts.filter(acc => getAccountCata(acc.account) === "Equity")} onEdit={this.handleOpenAccountDrawer} onAddTransaction={this.handleOpenAddTransactionDrawer} />
             </TabPane>
           </Tabs>
         </div>

@@ -196,15 +196,17 @@ class AddTransactionDrawer extends Component {
       }).finally(() => { this.setState({ loading: false }) })
   }
 
-  computeBalanceAmount(values) {
+  computeBalanceAmount(values, ledgerCurrency) {
     let balanceAmount = Decimal(0);
-    values.entries.filter(a => a && a.number).forEach(entryValue => {
-      const { number, commodity, price, priceCommodity } = entryValue
-      if (priceCommodity && priceCommodity !== commodity && number && price) {
+    values.entries.filter(a => a && (a.number || a.price)).forEach(entryValue => {
+      const { number, currency, price } = entryValue
+      if (currency && ledgerCurrency !== currency && number && price) {
         // 不同币种需要计算税率
         balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(price)))
       } else if (number) {
         balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
+      } else if (price) {
+        balanceAmount = (balanceAmount || Decimal(0)).div(Decimal(price))
       }
     })
     return balanceAmount.toNumber()
@@ -327,7 +329,7 @@ class AddTransactionDrawer extends Component {
                         accountCommodity = this.getAccountCommodity(selectAccount.account)
                       }
                       const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
-                      const balanceAmount = this.computeBalanceAmount(formEntriesValues)
+                      const balanceAmount = this.computeBalanceAmount(formEntriesValues, this.props.commodity.currency)
                       return (
                         <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
                           <Form.Item
