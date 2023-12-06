@@ -1,4 +1,4 @@
-import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined, EyeInvisibleOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { FormOutlined, Loading3QuartersOutlined, LoadingOutlined, PlusOutlined, SettingOutlined, SlidersOutlined, UploadOutlined, DollarCircleOutlined, EyeInvisibleOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { Alert, Button, Collapse, Drawer, Form, Input, List, message, Select, Tabs, Tag, Upload, Spin, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -14,6 +14,7 @@ import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 import './styles/Account.css';
 import AddTransactionDrawer from '../components/AddTransactionDrawer';
+import MultiCommodityChartDrawer from '../components/MultiCommodityChartDrawer';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -40,8 +41,16 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
         <Collapse ghost>
           {
             Object.values(groupByAccountsDict).map(groupByAccount => {
-              const totalAmount = groupByAccount.children.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
-              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 (${commodity.symbol}${Math.abs(totalAmount)})`}>
+              let totalAmount
+              console.log(groupByAccount)
+              if (groupByAccount && groupByAccount.children.length > 0) {
+                const accounts = groupByAccount.children.filter(a => a.marketNumber)
+                if (accounts && accounts.length > 0) {
+                  totalAmount = accounts.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
+                }
+              }
+              console.log(totalAmount)
+              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 ${totalAmount ? `(${AccountAmount(groupByAccount.id, totalAmount, commodity.symbol)})` : ''}`}>
                 <List
                   itemLayout="horizontal"
                   dataSource={groupByAccount.children}
@@ -50,7 +59,7 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                     if (hideMoney) {
                       actions.push("***")
                     } else if (item.marketNumber) {
-                      const positions = item.positions.filter(p => p.currency !== item.marketCurrency)
+                      const positions = (item.positions || []).filter(p => p.currency !== item.marketCurrency)
                       if (positions.length > 0) {
                         actions.push(<span>{positions.map(p => AccountAmount(item.account, p.number, p.currencySymbol))}</span>)
                         actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
@@ -118,6 +127,7 @@ class Account extends Component {
     commodityPriceDrawerVisible: false,
     addTransactionAccount: null,
     addTransactionDrawerVisible: false,
+    multiCommodityDrawerVisible: false,
     hideMoney: JSON.parse(window.localStorage.getItem("hideMoney") || 'false'),
   }
 
@@ -279,6 +289,10 @@ class Account extends Component {
     this.setState({ commodityPriceDrawerVisible: false })
   }
 
+  handleCloseMultiCommodityDrawer = () => {
+    this.setState({ multiCommodityDrawerVisible: false })
+  }
+
   handleOpenAddTransactionDrawer = (item) => {
     this.setState({ addTransactionDrawerVisible: true, addTransactionAccount: { account: item.account, currency: item.currency } })
   }
@@ -324,15 +338,18 @@ class Account extends Component {
             {this.state.hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
           </div>
           <div>
+            <Button type="text" size="small" icon={<DollarCircleOutlined />} onClick={() => { this.setState({ multiCommodityDrawerVisible: true }) }}>
+              全部货币
+            </Button>
             <Button type="text" size="small" icon={<SlidersOutlined />} onClick={() => { this.setState({ commodityPriceDrawerVisible: true }) }}>
               汇率曲线
             </Button>
             <Button type="text" size="small" icon={<FormOutlined />} onClick={() => { this.props.history.push('/edit') }}>
               编辑源文件
             </Button>
-            <Button type="text" size="small" icon={<SettingOutlined />} onClick={() => { this.props.history.push('/setting') }}>
+            {/* <Button type="text" size="small" icon={<SettingOutlined />} onClick={() => { this.props.history.push('/setting') }}>
               设置
-            </Button>
+            </Button> */}
           </div>
         </div>
         <Drawer
@@ -522,7 +539,7 @@ class Account extends Component {
                 !this.state.editAccountDiffCommodity && <Fragment>
                   <div style={{ height: '1rem' }}></div>
                   <Button size="large" style={{ width: '100%' }} onClick={this.handleOpenSyncPriceDrawer}>
-                    同步净值
+                    同步净值/汇率
                   </Button>
                 </Fragment>
               }
@@ -546,6 +563,11 @@ class Account extends Component {
         <CommodityPriceChartDrawer
           visible={this.state.commodityPriceDrawerVisible}
           onClose={this.handleCloseCommodityPriceDrawer}
+        />
+        <MultiCommodityChartDrawer
+          visible={this.state.multiCommodityDrawerVisible}
+          sysCurrency={this.props.commodity.currency}
+          onClose={this.handleCloseMultiCommodityDrawer}
         />
         <AddTransactionDrawer
           {...this.props}

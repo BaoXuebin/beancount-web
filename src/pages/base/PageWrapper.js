@@ -58,8 +58,8 @@ class PageWrapper extends Component {
                   }
                   <Link to="/account">账户</Link>
                   <Link to="/stats">统计</Link>
+                  <Link to="/setting">设置</Link>
                   <a onClick={this.handleOut}>退出</a>
-                  {/* <Link to="/about">关于</Link> */}
                   {/* <ThemeToggle /> */}
                   <a href={Config.github}>
                     <img src="https://img.shields.io/github/stars/BaoXuebin/beancount-gs?style=social" />

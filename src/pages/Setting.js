@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, message, Modal } from 'antd';
+import { Button, Col, message, Modal, Row, Space } from 'antd';
 import React, { Component } from 'react';
 import { fetch } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
@@ -45,7 +45,9 @@ class Setting extends Component {
 
     return (
       <div className="setting-page">
-        <Button block danger loading={this.state.loading} onClick={this.handleOpenDeleteModal}>删除账本</Button>
+        <Space direction='vertical' size="middle" style={{ display: 'flex' }}>
+          <Button block danger loading={this.state.loading} onClick={this.handleOpenDeleteModal}>删除账本</Button>
+        </Space>
       </div>
     )
   }
