@@ -32,7 +32,7 @@ class Ledger extends Component {
     this.setState({ loading: true })
     fetch('/api/ledger', { method: "GET" })
       .then(ledgers => {
-        this.setState({ ledgers, newLedger: ledgers.length == 0 })
+        this.setState({ ledgers, newLedger: ledgers.length === 0 })
       }).finally(() => { this.setState({ loading: false }) })
   }
 

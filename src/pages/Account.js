@@ -42,15 +42,13 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
           {
             Object.values(groupByAccountsDict).map(groupByAccount => {
               let totalAmount
-              console.log(groupByAccount)
               if (groupByAccount && groupByAccount.children.length > 0) {
                 const accounts = groupByAccount.children.filter(a => a.marketNumber)
                 if (accounts && accounts.length > 0) {
                   totalAmount = accounts.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
                 }
               }
-              console.log(totalAmount)
-              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 ${totalAmount ? `(${AccountAmount(groupByAccount.id, totalAmount, commodity.symbol)})` : ''}`}>
+              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 ${(totalAmount && !hideMoney) ? `(${AccountAmount(groupByAccount.id, totalAmount, commodity.symbol)})` : ''}`}>
                 <List
                   itemLayout="horizontal"
                   dataSource={groupByAccount.children}
@@ -71,7 +69,7 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                       actions.push(<LoadingOutlined />)
                     } else {
                       actions.push(<Tooltip title="新增交易"><EditOutlined key="list-more" onClick={() => { onAddTransaction(item) }} /></Tooltip>)
-                      actions.push(<Tooltip title="更多操作"><SettingOutlined key="list-more" onClick={() => { onEdit(item, !item.marketCurrency || (item.marketCurrency && (item.currency === item.marketCurrency))) }} /></Tooltip>)
+                      actions.push(<Tooltip title="更多操作"><SettingOutlined key="list-more" onClick={() => { console.log(item, commodity); onEdit(item, item.currency == commodity.currency) }} /></Tooltip>)
                     }
                     return (
                       <List.Item
@@ -82,7 +80,14 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                           title={<div>{item.endDate && <Tag color="#f50">已关闭</Tag>}<span>{getAccountName(item.account)}</span></div>}
                           description={
                             <div>
-                              {item.startDate}{item.endDate ? '~' + item.endDate : ''} {item.currency || ''}
+                              {item.startDate}{item.endDate ? '~' + item.endDate : ''}&nbsp;
+                              {item.currency || ''}
+                              {
+                                item.exRate &&
+                                <Tooltip title={item.exDate}>
+                                  <span>={item.exRate}</span>
+                                </Tooltip>
+                              }
                             </div>
                           }
                         />

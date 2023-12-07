@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Col, message, Modal, Row, Space } from 'antd';
+import { Button, message, Modal, Space } from 'antd';
 import React, { Component } from 'react';
 import { fetch } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';

@@ -429,7 +429,7 @@ class Import extends Component {
             dataSource={sliceTransactions}
             rowKey={record => record.id}
             renderItem={item => {
-              const samePayeeCount = this.state.transactions.filter(t => t.payee == item.payee).length
+              const samePayeeCount = this.state.transactions.filter(t => t.payee === item.payee).length
               return (
                 <List.Item
                   key={item.id}

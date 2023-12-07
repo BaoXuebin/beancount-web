@@ -121,13 +121,20 @@ class AddTransactionDrawer extends Component {
 
   handleChangeAccount = (account, idx) => {
     const entries = this.formRef.current.getFieldsValue().entries;
-    const accountCommodity = this.getAccountCommodity(account)
-    // 账户货币单位不同，需要指定汇率
-    entries[idx].commodity = accountCommodity
-    if (accountCommodity !== this.props.commodity.currency) {
-      entries[idx].priceCommodity = this.props.commodity.currency
+    const acc = this.getAccount(account)
+    if (acc) {
+      // 账户货币单位不同，需要指定汇率
+      entries[idx] = acc
+      if (acc.currency !== this.props.commodity.currency) {
+        entries[idx].priceCommodity = this.props.commodity.currency
+      }
     }
     this.formRef.current.setFieldsValue({ entries })
+  }
+
+  getAccount = (account) => {
+    const arr = this.state.accounts.filter(acc => acc.account === account)[0]
+    return arr
   }
 
   getAccountCommodity = (account) => {
@@ -164,6 +171,9 @@ class AddTransactionDrawer extends Component {
     let nullCount = 0;
     let balanceEntry;
     for (let entry of values.entries) {
+      if (entry && !entry.price && entry.exRate) {
+        entry.price = entry.exRate
+      }
       if (!entry || !entry.number) {
         balanceEntry = entry
         nullCount++;
@@ -198,15 +208,20 @@ class AddTransactionDrawer extends Component {
 
   computeBalanceAmount(values, ledgerCurrency) {
     let balanceAmount = Decimal(0);
-    values.entries.filter(a => a && (a.number || a.price)).forEach(entryValue => {
-      const { number, currency, price } = entryValue
+    values.entries.filter(a => a && (a.number || a.price || a.exRate)).forEach(entryValue => {
+      const { number, currency, price, exRate } = entryValue
       if (currency && ledgerCurrency !== currency && number && price) {
-        // 不同币种需要计算税率
+        // 投资净值
         balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(price)))
+      } else if (currency && ledgerCurrency !== currency && number && exRate) {
+        // 不同币种需要计算汇率
+        balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(exRate)))
       } else if (number) {
         balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
       } else if (price) {
         balanceAmount = (balanceAmount || Decimal(0)).div(Decimal(price))
+      } else if (exRate) {
+        balanceAmount = (balanceAmount || Decimal(0)).div(Decimal(exRate))
       }
     })
     return balanceAmount.toNumber()
@@ -330,6 +345,7 @@ class AddTransactionDrawer extends Component {
                       }
                       const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
                       const balanceAmount = this.computeBalanceAmount(formEntriesValues, this.props.commodity.currency)
+                      console.log(formEntriesValues, selectAccount)
                       return (
                         <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
                           <Form.Item
@@ -353,7 +369,7 @@ class AddTransactionDrawer extends Component {
                             </Select>
                           </Form.Item>
                           {
-                            (accountCommodity && accountCommodity !== this.props.commodity.currency) &&
+                            (accountCommodity && accountCommodity !== this.props.commodity.currency && !selectAccount.isAnotherCurrency) &&
                             <Fragment>
                               <Form.Item
                                 hidden
@@ -386,7 +402,7 @@ class AddTransactionDrawer extends Component {
                               <Input
                                 type="number"
                                 step="0.01"
-                                addonBefore={accountCommodity}
+                                addonBefore={(selectAccount && selectAccount.exRate) ? `${accountCommodity}=${selectAccount.exRate}${this.props.commodity.currency}` : accountCommodity}
                                 placeholder={balanceAmount || `${this.state.isDivide ? '预支分期总' : ''}金额`}
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}
