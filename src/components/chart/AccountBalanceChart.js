@@ -1,16 +1,16 @@
-import { Input, Spin } from 'antd';
+import { Segmented, Spin } from 'antd';
 import { Chart, Line, Point, Tooltip } from "bizcharts";
-import moment from 'moment';
 import React, { Component } from "react";
-import { fetch, getCurrentMonth } from '../../config/Util';
-import MonthSelector from '../MonthSelector';
+import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
+
+const defaultAccount = [{ value: 'Assets', label: AccountTypeDict('Assets') }]
 
 class AccountBalanceChart extends Component {
 
   state = {
     loading: false,
     balanceData: [],
-    accountPrefix: 'Assets'
+    accountPrefix: defaultIfEmpty(this.props.selectedAccounts, defaultAccount)[0].value
   }
 
   componentDidMount() {
@@ -20,6 +20,9 @@ class AccountBalanceChart extends Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.selectedMonth !== this.props.selectedMonth) {
       this.queryAccountBalance(nextProps.selectedMonth)
+    }
+    if (nextProps.selectedAccounts !== this.props.selectedAccounts) {
+      this.setState({ accountPrefix: defaultIfEmpty(nextProps.selectedAccounts, defaultAccount)[0].value })
     }
   }
 
@@ -36,34 +39,16 @@ class AccountBalanceChart extends Component {
         month = yearAndMonth[1]
       }
     }
-    let startDate, endDate
-    if (year && month) {
-      startDate = moment(year + "-" + month).startOf("month")
-      endDate = moment(year + "-" + month).endOf("month")
-    } else if (year) {
-      startDate = moment(year).startOf("year")
-      endDate = moment(year).endOf("year")
-    }
     fetch(`/api/auth/stats/account/balance?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}`)
       .then(balanceData => {
-        let data = balanceData
-        if (startDate && endDate) {
-          data = balanceData.filter(d => {
-            const date = moment(d.date)
-            return date.isAfter(startDate) && date.isBefore(endDate)
-          })
-        }
-        this.setState({ balanceData: data })
+        this.setState({ balanceData })
       }).finally(() => { this.setState({ loading: false }) })
   }
 
-  handleEnter = (e) => {
-    if (e.key === 'Enter') {
-      const accountPrefix = this.accountInput.input.value.trim()
-      this.setState({ accountPrefix }, () => {
-        this.queryAccountBalance(this.props.selectedMonth)
-      })
-    }
+  handleChangeAccount = (accountPrefix) => {
+    this.setState({ accountPrefix }, () => {
+      this.queryAccountBalance(this.props.selectedMonth)
+    })
   }
 
   render() {
@@ -72,13 +57,7 @@ class AccountBalanceChart extends Component {
     }
     return (
       <div>
-        <Input
-          ref={input => this.accountInput = input}
-          defaultValue={this.state.accountPrefix}
-          placeholder="输入账户"
-          style={{ width: '240px' }}
-          onKeyPress={this.handleEnter}
-        />
+        <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
         <Spin spinning={this.state.loading}>
           <Chart
             appendPadding={[10, 0, 0, 10]}

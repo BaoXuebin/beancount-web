@@ -345,7 +345,6 @@ class AddTransactionDrawer extends Component {
                       }
                       const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
                       const balanceAmount = this.computeBalanceAmount(formEntriesValues, this.props.commodity.currency)
-                      console.log(formEntriesValues, selectAccount)
                       return (
                         <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
                           <Form.Item
@@ -369,7 +368,7 @@ class AddTransactionDrawer extends Component {
                             </Select>
                           </Form.Item>
                           {
-                            (accountCommodity && accountCommodity !== this.props.commodity.currency && !selectAccount.isAnotherCurrency) &&
+                            (accountCommodity && accountCommodity !== this.props.commodity.currency && !selectAccount.exRate) &&
                             <Fragment>
                               <Form.Item
                                 hidden
@@ -402,7 +401,7 @@ class AddTransactionDrawer extends Component {
                               <Input
                                 type="number"
                                 step="0.01"
-                                addonBefore={(selectAccount && selectAccount.exRate) ? `${accountCommodity}=${selectAccount.exRate}${this.props.commodity.currency}` : accountCommodity}
+                                addonBefore={(selectAccount && selectAccount.exRate) ? `${accountCommodity}≈${selectAccount.exRate}${this.props.commodity.currency}` : accountCommodity}
                                 placeholder={balanceAmount || `${this.state.isDivide ? '预支分期总' : ''}金额`}
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}

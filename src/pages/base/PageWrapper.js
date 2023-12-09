@@ -84,7 +84,7 @@ class PageWrapper extends Component {
           </footer>
           <Modal width={860} open={this.state.isModalVisible} onOk={this.closeErrorModal} onCancel={this.closeErrorModal}>
             <pre>
-              {this.state.error.map(e => <p>{e}</p>)}
+              {this.state.error.map(e => <p key={e}>{e}</p>)}
             </pre>
           </Modal>
         </div>

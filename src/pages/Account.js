@@ -85,7 +85,7 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                               {
                                 item.exRate &&
                                 <Tooltip title={item.exDate}>
-                                  <span>={item.exRate}</span>
+                                  <span>≈{item.exRate}</span>
                                 </Tooltip>
                               }
                             </div>
@@ -299,7 +299,7 @@ class Account extends Component {
   }
 
   handleOpenAddTransactionDrawer = (item) => {
-    this.setState({ addTransactionDrawerVisible: true, addTransactionAccount: { account: item.account, currency: item.currency } })
+    this.setState({ addTransactionDrawerVisible: true, addTransactionAccount: item })
   }
 
   handleCloseAddTransactionDrawer = () => {

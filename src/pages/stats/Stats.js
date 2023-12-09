@@ -7,13 +7,14 @@ import IncomeExpensesLineChart from '../../components/chart/IncomeExpensesLineCh
 import PayeeChart from '../../components/chart/PayeeChart';
 import SubAccountPercentPie from '../../components/chart/SubAccountPercentPie';
 import StatisticAmount from '../../components/StatisticAmount';
-import { AccountTypeDict, fetch, getCurrentMonth, getLastMonth } from '../../config/Util';
+import { AccountTypeDict, defaultIfEmpty, fetch, getCurrentMonth, getLastMonth } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
 import Page from '../base/Page';
 import './styles/stats.css';
 import MonthSelector from '../../components/MonthSelector';
 import dayjs from 'dayjs';
 import AccountAmount from '../../components/AccountAmount';
+import AccountCascader from '../../components/AccountCascader';
 
 class Stats extends Component {
 
@@ -29,7 +30,8 @@ class Stats extends Component {
     Expenses: 0,
     Liabilities: 0,
     hideMoney: JSON.parse(window.localStorage.getItem("hideMoney") || 'false'),
-    selectedMonth: dayjs().date() >= 10 ? getCurrentMonth() : getLastMonth()
+    selectedMonth: dayjs().date() >= 10 ? getCurrentMonth() : getLastMonth(),
+    selectedAccounts: defaultIfEmpty(JSON.parse(window.localStorage.getItem('accounts') || '[]'), [])
   }
 
   componentDidMount() {
@@ -68,7 +70,13 @@ class Stats extends Component {
     })
   }
 
-  handleChnageTab = (statsTab) => {
+  handleChangeAccount = (accounts) => {
+    this.setState({
+      selectedAccounts: accounts
+    })
+  }
+
+  handleChangeTab = (statsTab) => {
     if (this.timeoutEvent) {
       clearTimeout(this.timeoutEvent)
     }
@@ -97,11 +105,17 @@ class Stats extends Component {
     const totalLiabilitiesPrefix = totalLiabilitiesStr.substring(0, 1)
     return (
       <div className="stats-page">
-        <div style={{ textAlign: 'left' }}>
-          <MonthSelector value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
-          &nbsp;&nbsp;{hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <MonthSelector value={this.state.selectedMonth} onChange={this.handleChangeMonth} />
+            &nbsp;&nbsp;{hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
+          </div>
+          <div>
+            <AccountCascader value={this.state.selectedAccounts} onChange={this.handleChangeAccount} />
+          </div>
         </div>
-        <h1>统计</h1>
+        {/* <h1>统计</h1> */}
+        <div style={{ height: '1rem' }}></div>
         <div>
           <Row gutter={16}>
             <Col span={12} offset={6}>
@@ -127,18 +141,18 @@ class Stats extends Component {
             </Col>
           </Row>
         </div>
-        <Tabs defaultActiveKey="1" destroyInactiveTabPane activeKey={statsTab} centered style={{ marginTop: '2rem' }} onChange={this.handleChnageTab}>
+        <Tabs defaultActiveKey="1" destroyInactiveTabPane activeKey={statsTab} centered style={{ marginTop: '2rem' }} onChange={this.handleChangeTab}>
           <Tabs.TabPane tab="月度收支统计图" key="1">
             <IncomeExpensesLineChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="资产负债统计" key="2">
-            <AccountBalanceChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
+            <AccountBalanceChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="损益账户统计" key="3">
-            <AccountDayTrendChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
+            <AccountDayTrendChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="账户分布占比" key="4">
-            <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
+            <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="商户消费排行" key="5">
             <PayeeChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />

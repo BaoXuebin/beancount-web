@@ -1,7 +1,9 @@
-import { Input, Select, Spin } from 'antd';
+import { Segmented, Select, Spin } from 'antd';
 import { Chart, Interval, Tooltip } from "bizcharts";
 import React, { Component } from "react";
-import { fetch } from '../../config/Util';
+import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
+
+const defaultAccount = [{ value: 'Expenses', label: AccountTypeDict('Expenses') }]
 
 class AccountDayTrendChart extends Component {
 
@@ -41,13 +43,10 @@ class AccountDayTrendChart extends Component {
       }).finally(() => { this.setState({ loading: false }) })
   }
 
-  handleEnter = (e) => {
-    if (e.key === 'Enter') {
-      const accountPrefix = this.accountInput.input.value.trim()
-      this.setState({ accountPrefix }, () => {
-        this.queryAccountDayTrend(this.props.selectedMonth)
-      })
-    }
+  handleChangeAccount = (accountPrefix) => {
+    this.setState({ accountPrefix }, () => {
+      this.queryAccountDayTrend(this.props.selectedMonth)
+    })
   }
 
   handleChangeStatsType = (type) => {
@@ -62,7 +61,7 @@ class AccountDayTrendChart extends Component {
     }
     return (
       <div>
-        <Input
+        {/* <Input
           ref={input => this.accountInput = input}
           defaultValue={this.state.accountPrefix}
           placeholder="输入账户"
@@ -76,7 +75,14 @@ class AccountDayTrendChart extends Component {
               <Select.Option value="sum">累计</Select.Option>
             </Select>
           }
-        />
+        /> */}
+        <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
+        <Segmented options={[
+          { value: 'day', label: '按天' },
+          { value: 'month', label: '按月' },
+          { value: 'year', label: '按年' },
+          { value: 'sum', label: '累计' }
+        ]} value={this.state.type} onChange={this.handleChangeStatsType} />
         <Spin spinning={this.state.loading}>
           <Chart height={480} autoFit data={this.state.dayAmountData} interactions={['active-region']} padding={[30, 30, 30, 50]} >
             <Interval position="date*amount" />

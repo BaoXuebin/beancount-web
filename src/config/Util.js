@@ -93,3 +93,7 @@ export const getDaysInMonth = (year, month) => {
   }
   return daysOfMonth;
 }
+
+export const defaultIfEmpty = (value, defaultValue) => {
+  return value && value.length > 0 ? value : defaultValue;
+}
