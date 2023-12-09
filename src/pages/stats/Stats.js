@@ -155,7 +155,7 @@ class Stats extends Component {
             <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="商户消费排行" key="5">
-            <PayeeChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
+            <PayeeChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
         </Tabs>
       </div >

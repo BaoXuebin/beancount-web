@@ -3,7 +3,7 @@ import { Chart, Line, Point, Tooltip } from "bizcharts";
 import React, { Component } from "react";
 import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
 
-const defaultAccount = [{ value: 'Assets', label: AccountTypeDict('Assets') }]
+const defaultAccount = [{ value: 'Assets', label: AccountTypeDict['Assets'] }]
 
 class AccountBalanceChart extends Component {
 
@@ -57,7 +57,9 @@ class AccountBalanceChart extends Component {
     }
     return (
       <div>
-        <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
+        <div style={{ marginBottom: '1rem' }}>
+          <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
+        </div>
         <Spin spinning={this.state.loading}>
           <Chart
             appendPadding={[10, 0, 0, 10]}
@@ -72,7 +74,7 @@ class AccountBalanceChart extends Component {
             <Tooltip showCrosshairs follow={false} />
           </Chart>
         </Spin>
-      </div>
+      </div >
     )
   }
 }

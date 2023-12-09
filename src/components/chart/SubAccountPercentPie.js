@@ -1,11 +1,10 @@
-import { Input, Select, Spin } from 'antd';
+import { Segmented, Spin } from 'antd';
 import { Axis, Chart, Coordinate, Interaction, Interval, Tooltip } from "bizcharts";
 import Decimal from 'decimal.js';
 import React, { Component } from "react";
-import { fetch, getCurrentMonth } from '../../config/Util';
-import MonthSelector from '../MonthSelector';
+import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
 
-
+const defaultAccount = [{ value: 'Expenses', label: AccountTypeDict['Expenses'] }]
 class SubAccountPercentPie extends Component {
 
   state = {
@@ -54,13 +53,10 @@ class SubAccountPercentPie extends Component {
       }).finally(() => { this.setState({ loading: false }) })
   }
 
-  handleEnter = (e) => {
-    if (e.key === 'Enter') {
-      const accountPrefix = this.accountInput.input.value.trim()
-      this.setState({ accountPrefix }, () => {
-        this.queryStatsSubAccountPercent(this.props.selectedMonth)
-      })
-    }
+  handleChangeAccount = (accountPrefix) => {
+    this.setState({ accountPrefix }, () => {
+      this.queryStatsSubAccountPercent(this.props.selectedMonth)
+    })
   }
 
   handleChangeAccountLevel = (level) => {
@@ -75,20 +71,14 @@ class SubAccountPercentPie extends Component {
     }
     return (
       <div>
-        <Input
-          ref={input => this.accountInput = input}
-          defaultValue={this.state.accountPrefix}
-          placeholder="输入账户"
-          style={{ width: '240px' }}
-          onKeyPress={this.handleEnter}
-          addonAfter={
-            <Select defaultValue="1" value={this.state.level} onChange={this.handleChangeAccountLevel}>
-              <Select.Option value="1">一层</Select.Option>
-              <Select.Option value="2">二层</Select.Option>
-              <Select.Option value="">不限制</Select.Option>
-            </Select>
-          }
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
+          <Segmented options={[
+            { value: '1', label: '一级子账户' },
+            { value: '2', label: '二级子账户' },
+            { value: '', label: '所有' }
+          ]} value={this.state.level} onChange={this.handleChangeAccountLevel} />
+        </div>
         <Spin spinning={this.state.loading}>
           <Chart height={560} data={this.state.subAccountPercentData} scale={{
             percent: {

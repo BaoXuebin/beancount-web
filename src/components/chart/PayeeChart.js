@@ -1,9 +1,9 @@
-import { Input, Select, Spin } from 'antd';
+import { Segmented, Spin } from 'antd';
 import { Chart, Coordinate, Interaction, Interval } from "bizcharts";
 import React, { Component } from "react";
-import { fetch, getCurrentMonth } from '../../config/Util';
-import MonthSelector from '../MonthSelector';
+import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
 
+const defaultAccount = [{ value: 'Expenses', label: AccountTypeDict['Expenses'] }]
 class PayeeChart extends Component {
 
   state = {
@@ -43,13 +43,10 @@ class PayeeChart extends Component {
       }).finally(() => { this.setState({ loading: false }) })
   }
 
-  handleEnter = (e) => {
-    if (e.key === 'Enter') {
-      const accountPrefix = this.accountInput.input.value.trim()
-      this.setState({ accountPrefix }, () => {
-        this.queryPayeeStatsValue(this.props.selectedMonth)
-      })
-    }
+  handleChangeAccount = (value) => {
+    this.setState({ accountPrefix: value }, () => {
+      this.queryPayeeStatsValue(this.props.selectedMonth)
+    })
   }
 
   handleChangeStatsType = (type) => {
@@ -64,20 +61,14 @@ class PayeeChart extends Component {
     }
     return (
       <div>
-        <Input
-          ref={input => this.accountInput = input}
-          defaultValue={this.state.accountPrefix}
-          placeholder="输入账户"
-          style={{ width: '240px' }}
-          onKeyPress={this.handleEnter}
-          addonAfter={
-            <Select value={this.state.type} onChange={this.handleChangeStatsType}>
-              <Select.Option value="sum">累计</Select.Option>
-              <Select.Option value="cot">频次</Select.Option>
-              <Select.Option value="avg">单笔</Select.Option>
-            </Select>
-          }
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
+          <Segmented options={[
+            { value: 'sum', label: '累计' },
+            { value: 'cot', label: '频次' },
+            { value: 'avg', label: '单笔' },
+          ]} value={this.state.type} onChange={this.handleChangeStatsType} />
+        </div>
         <Spin spinning={this.state.loading}>
           <Chart
             height={560}
