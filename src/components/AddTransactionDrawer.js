@@ -1,5 +1,5 @@
 import { CloseCircleOutlined, HourglassOutlined, PlusOutlined, TagsOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Tag } from 'antd';
+import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Space, Tag } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component, Fragment } from 'react';
@@ -265,13 +265,15 @@ class AddTransactionDrawer extends Component {
       >
         <Form className="page-form" size="large" ref={this.formRef} onFinish={this.handleSubmit} validateMessages={validateMessages}>
           <div style={{ marginBottom: '1rem' }}>
-            {
-              this.state.templates.map(t => (
-                <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
-                  <Tag size="middle" color="#1DA57A" closable onClose={(e) => { this.handleDeleteTransactionTemplate(e, t.id) }}>{t.templateName || t.payee || t.id}</Tag>
-                </a>
-              ))
-            }
+            <Space wrap>
+              {
+                this.state.templates.map(t => (
+                  <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
+                    <Tag size="middle" color="#1DA57A" closable onClose={(e) => { this.handleDeleteTransactionTemplate(e, t.id) }}>{t.templateName || t.payee || t.id}</Tag>
+                  </a>
+                ))
+              }
+            </Space>
           </div>
           <Form.Item name="date" initialValue={dayjs().format('YYYY-MM-DD')} rules={[{ required: true }]}>
             <Input type="date" placeholder="交易时间" />
@@ -402,7 +404,7 @@ class AddTransactionDrawer extends Component {
                                 type="number"
                                 step="0.01"
                                 addonBefore={(selectAccount && selectAccount.exRate) ? `${accountCommodity}≈${selectAccount.exRate}${this.props.commodity.currency}` : accountCommodity}
-                                placeholder={balanceAmount || `${this.state.isDivide ? '预支分期总' : ''}金额`}
+                                placeholder={balanceAmount ? `${balanceAmount}(按Enter键可快速保存)` : `${this.state.isDivide ? '预支分期总' : ''}金额`}
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}
                               />
