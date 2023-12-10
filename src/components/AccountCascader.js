@@ -45,7 +45,7 @@ export default ({ value, onChange }) => {
             }
           }
         }
-        const allRoot = ['Expenses', 'Income', 'Assets', 'Liabilities']
+        const allRoot = ['Expenses', 'Income', 'Assets', 'Liabilities', 'Equity']
         for (let root of allRoot) {
           options.push({
             value: root,

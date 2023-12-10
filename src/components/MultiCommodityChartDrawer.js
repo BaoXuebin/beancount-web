@@ -11,7 +11,7 @@ class MultiCommodityChartDrawer extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.visible && this.state.currencies.length === 0) {
+    if (nextProps.visible) {
       this.queryCommodityCurrencies();
     }
   }
@@ -49,7 +49,7 @@ class MultiCommodityChartDrawer extends Component {
                   <List.Item.Meta
                     avatar={<Avatar style={{ color: '#f56a00', backgroundColor: '#fde3cf' }}>{currency.symbol}</Avatar>}
                     title={currency.name}
-                    description={currency.exRate ? `1${currency.currency}=${currency.exRate}${this.props.sysCurrency} (${currency.date})` : '汇率未定义'}
+                    description={currency.price ? `1${currency.currency}=${currency.price}${this.props.sysCurrency} (${currency.priceDate})` : '汇率未定义'}
                   />
                 </List.Item>
               )}

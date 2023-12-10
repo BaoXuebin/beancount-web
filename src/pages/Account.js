@@ -83,9 +83,9 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                               {item.startDate}{item.endDate ? '~' + item.endDate : ''}&nbsp;
                               {item.currency || ''}
                               {
-                                item.exRate &&
-                                <Tooltip title={item.exDate}>
-                                  <span>≈{item.exRate}</span>
+                                item.price &&
+                                <Tooltip title={item.priceDate}>
+                                  <span>≈{item.price}</span>
                                 </Tooltip>
                               }
                             </div>

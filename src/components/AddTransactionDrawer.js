@@ -103,16 +103,28 @@ class AddTransactionDrawer extends Component {
 
   handleSaveTransactionTemplate = () => {
     const values = this.formRef.current.getFieldsValue();
+    if (values && values.entries && values.entries.length > 0) {
+      if (this.state.accounts && this.state.accounts.length > 0) {
+        values.entries.forEach(e => {
+          const accs = this.state.accounts.filter(a => a.account === e.account)
+          if (accs && accs.length === 1) {
+            e = accs[0]
+            e.number = e.number || ''
+          }
+        })
+      }
+    }
+    console.log(values)
     const { payee, desc } = values
     values.templateName = `${payee || ''}-${desc || ''}`
     this.setState({ templateLoading: true })
-    fetch('/api/auth/transaction/template', { method: 'POST', body: values })
-      .then(res => {
-        message.success('保存模版成功')
-        this.queryTransactionTemplates()
-      }).finally(() => {
-        this.setState({ templateLoading: false, drawerVisible: false })
-      })
+    // fetch('/api/auth/transaction/template', { method: 'POST', body: values })
+    //   .then(res => {
+    //     message.success('保存模版成功')
+    //     this.queryTransactionTemplates()
+    //   }).finally(() => {
+    //     this.setState({ templateLoading: false, drawerVisible: false })
+    //   })
   }
 
   handleChangeAmount = (balanceAmount) => {
@@ -171,8 +183,8 @@ class AddTransactionDrawer extends Component {
     let nullCount = 0;
     let balanceEntry;
     for (let entry of values.entries) {
-      if (entry && !entry.price && entry.exRate) {
-        entry.price = entry.exRate
+      if (entry && !entry.price && entry.price) {
+        entry.price = entry.price
       }
       if (!entry || !entry.number) {
         balanceEntry = entry
@@ -208,20 +220,20 @@ class AddTransactionDrawer extends Component {
 
   computeBalanceAmount(values, ledgerCurrency) {
     let balanceAmount = Decimal(0);
-    values.entries.filter(a => a && (a.number || a.price || a.exRate)).forEach(entryValue => {
-      const { number, currency, price, exRate } = entryValue
+    const currentAccounts = values.entries.filter(a => a && a.currency !== ledgerCurrency && (a.number || a.price))
+    const commonAccounts = values.entries.filter(a => a && a.currency === ledgerCurrency && a.number)
+    commonAccounts.forEach(entryValue => {
+      const { number } = entryValue
+      balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
+    })
+    currentAccounts.forEach(entryValue => {
+      const { number, currency, price } = entryValue
       if (currency && ledgerCurrency !== currency && number && price) {
-        // 投资净值
         balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(price)))
-      } else if (currency && ledgerCurrency !== currency && number && exRate) {
-        // 不同币种需要计算汇率
-        balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number).mul(Decimal(exRate)))
       } else if (number) {
         balanceAmount = (balanceAmount || Decimal(0)).sub(Decimal(number))
       } else if (price) {
         balanceAmount = (balanceAmount || Decimal(0)).div(Decimal(price))
-      } else if (exRate) {
-        balanceAmount = (balanceAmount || Decimal(0)).div(Decimal(exRate))
       }
     })
     return balanceAmount.toNumber()
@@ -236,8 +248,21 @@ class AddTransactionDrawer extends Component {
   }
 
   handleSetTemplate = (template) => {
+    // console.log(this.state.accounts)
     delete template.date;
-    template.entries.forEach(e => e.amount = Number(e.amount))
+    if (this.state.accounts && this.state.accounts.length > 0) {
+      template.entries.forEach(e => {
+        // e.amount = Number(e.amount)
+        // if (e.price) {
+        //   e.price = Number(e.price)
+        // }
+        const accs = this.state.accounts.filter(a => a.account === e.account)
+        if (accs && accs.length === 1) {
+          e = accs[0]
+        }
+      })
+    }
+    console.log(template)
     this.formRef.current.setFieldsValue(template)
   }
 
@@ -370,7 +395,7 @@ class AddTransactionDrawer extends Component {
                             </Select>
                           </Form.Item>
                           {
-                            (accountCommodity && accountCommodity !== this.props.commodity.currency && !selectAccount.exRate) &&
+                            (accountCommodity && accountCommodity !== this.props.commodity.currency && !selectAccount.isAnotherCurrency) &&
                             <Fragment>
                               <Form.Item
                                 hidden
@@ -403,7 +428,7 @@ class AddTransactionDrawer extends Component {
                               <Input
                                 type="number"
                                 step="0.01"
-                                addonBefore={(selectAccount && selectAccount.exRate) ? `${accountCommodity}≈${selectAccount.exRate}${this.props.commodity.currency}` : accountCommodity}
+                                addonBefore={(selectAccount && selectAccount.price) ? `${accountCommodity}≈${selectAccount.price}${this.props.commodity.currency}` : accountCommodity}
                                 placeholder={balanceAmount ? `${balanceAmount}(按Enter键可快速保存)` : `${this.state.isDivide ? '预支分期总' : ''}金额`}
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}

@@ -24,7 +24,8 @@ export const AccountTypeDict = {
   'Income': '收入',
   'Expenses': '支出',
   'Liabilities': '负债',
-  'Assets': '资产'
+  'Assets': '资产',
+  'Equity': '权益'
 }
 
 const checkStatus = (response) => {
