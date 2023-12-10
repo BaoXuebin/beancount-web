@@ -69,7 +69,7 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                       actions.push(<LoadingOutlined />)
                     } else {
                       actions.push(<Tooltip title="新增交易"><EditOutlined key="list-more" onClick={() => { onAddTransaction(item) }} /></Tooltip>)
-                      actions.push(<Tooltip title="更多操作"><SettingOutlined key="list-more" onClick={() => { console.log(item, commodity); onEdit(item, item.currency == commodity.currency) }} /></Tooltip>)
+                      actions.push(<Tooltip title="更多操作"><SettingOutlined key="list-more" onClick={() => { onEdit(item, item.currency == commodity.currency) }} /></Tooltip>)
                     }
                     return (
                       <List.Item

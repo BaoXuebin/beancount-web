@@ -79,6 +79,7 @@ class PageWrapper extends Component {
               <a href={`https://github.com/BaoXuebin/beancount-gs/releases/tag/${this.state.version}`} target="_blank">{this.state.version}</a>&nbsp;&nbsp;
               <a href={Config.license} target="_blank">MIT</a>&nbsp;&nbsp;
               <a href={Config.guide} target="_blank">使用文档</a>&nbsp;&nbsp;
+              <a href={Config.changelog} target="_blank">更新日志</a>&nbsp;&nbsp;
               <a href={Config.issue} target="_blank">反馈BUG</a>&nbsp;&nbsp;
             </div>
           </footer>

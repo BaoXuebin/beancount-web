@@ -114,17 +114,16 @@ class AddTransactionDrawer extends Component {
         })
       }
     }
-    console.log(values)
     const { payee, desc } = values
     values.templateName = `${payee || ''}-${desc || ''}`
     this.setState({ templateLoading: true })
-    // fetch('/api/auth/transaction/template', { method: 'POST', body: values })
-    //   .then(res => {
-    //     message.success('保存模版成功')
-    //     this.queryTransactionTemplates()
-    //   }).finally(() => {
-    //     this.setState({ templateLoading: false, drawerVisible: false })
-    //   })
+    fetch('/api/auth/transaction/template', { method: 'POST', body: values })
+      .then(res => {
+        message.success('保存模版成功')
+        this.queryTransactionTemplates()
+      }).finally(() => {
+        this.setState({ templateLoading: false, drawerVisible: false })
+      })
   }
 
   handleChangeAmount = (balanceAmount) => {
@@ -248,21 +247,17 @@ class AddTransactionDrawer extends Component {
   }
 
   handleSetTemplate = (template) => {
-    // console.log(this.state.accounts)
     delete template.date;
     if (this.state.accounts && this.state.accounts.length > 0) {
-      template.entries.forEach(e => {
-        // e.amount = Number(e.amount)
-        // if (e.price) {
-        //   e.price = Number(e.price)
-        // }
+      const entries = template.entries.map(e => {
         const accs = this.state.accounts.filter(a => a.account === e.account)
         if (accs && accs.length === 1) {
-          e = accs[0]
+          return {...accs[0], number: e.number}
         }
+        return e
       })
+      template.entries = entries
     }
-    console.log(template)
     this.formRef.current.setFieldsValue(template)
   }
 
@@ -395,7 +390,7 @@ class AddTransactionDrawer extends Component {
                             </Select>
                           </Form.Item>
                           {
-                            (accountCommodity && accountCommodity !== this.props.commodity.currency && !selectAccount.isAnotherCurrency) &&
+                            (accountCommodity && accountCommodity !== this.props.commodity.currency && (!selectAccount.isAnotherCurrency || !selectAccount.priceDate)) &&
                             <Fragment>
                               <Form.Item
                                 hidden
