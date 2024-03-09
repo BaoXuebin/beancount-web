@@ -182,16 +182,16 @@ class AddTransactionDrawer extends Component {
     let nullCount = 0;
     let balanceEntry;
     for (let entry of values.entries) {
-      if (entry && !entry.price && entry.price) {
-        entry.price = entry.price
-      }
+      // if (entry && !entry.price && entry.price) {
+      //   entry.price = entry.price
+      // }
       if (!entry || !entry.number) {
         balanceEntry = entry
         nullCount++;
       }
     }
     if (nullCount == 1) {
-      balanceEntry.number = String(this.computeBalanceAmount(values))
+      balanceEntry.number = String(this.computeBalanceAmount(values, this.props.commodity.currency))
     } else if (nullCount > 1) {
       message.error("账目金额项不能为空")
       return
