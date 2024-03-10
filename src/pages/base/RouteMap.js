@@ -13,6 +13,7 @@ const Edit = Loadable({ loader: () => import('../Edit'), loading: Loader });
 const Init = Loadable({ loader: () => import('../Init'), loading: Loader });
 const Import = Loadable({ loader: () => import('../Import'), loading: Loader });
 const Setting = Loadable({ loader: () => import('../Setting'), loading: Loader });
+const Event = Loadable({ loader: () => import('../Event'), loading: Loader });
 
 const RouteMap = () => (
   <React.Fragment>
@@ -26,6 +27,7 @@ const RouteMap = () => (
       <Route exact path="/stats" component={Stats} />
       <Route exact path="/import" component={Import} />
       <Route exact path="/setting" component={Setting} />
+      <Route exact path="/events" component={Event} />
       <Route component={Index} />
     </Switch>
   </React.Fragment>

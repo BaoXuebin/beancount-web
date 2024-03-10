@@ -58,8 +58,8 @@ class PageWrapper extends Component {
                   }
                   <Link to="/account">账户</Link>
                   <Link to="/stats">统计</Link>
+                  <Link to="/events">事件</Link>
                   <Link to="/setting">设置</Link>
-                  <a onClick={this.handleOut}>退出</a>
                   {/* <ThemeToggle /> */}
                   <a href={Config.github}>
                     <img src="https://img.shields.io/github/stars/BaoXuebin/beancount-gs?style=social" />
@@ -81,6 +81,7 @@ class PageWrapper extends Component {
               <a href={Config.guide} target="_blank">使用文档</a>&nbsp;&nbsp;
               <a href={Config.changelog} target="_blank">更新日志</a>&nbsp;&nbsp;
               <a href={Config.issue} target="_blank">反馈BUG</a>&nbsp;&nbsp;
+              <a onClick={this.handleOut}>退出</a>
             </div>
           </footer>
           <Modal width={860} open={this.state.isModalVisible} onOk={this.closeErrorModal} onCancel={this.closeErrorModal}>
