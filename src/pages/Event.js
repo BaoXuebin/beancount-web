@@ -54,13 +54,10 @@ class Event extends Component {
 
     this.eventTypeList = []
     this.eventTypes = Object.keys(temp).sort()
-    console.log(this.eventTypes)
     this.eventTypes.forEach(type => {
       this.eventTypeList.push({
         type,
-        events: (temp[type] || []).sort(function (a, b) {
-          return a.date > b.date;
-        })
+        events: temp[type] || []
       })
     })
   }
