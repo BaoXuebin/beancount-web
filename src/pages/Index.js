@@ -84,6 +84,8 @@ class Index extends Component {
     selectedTag: null,
     // 账单日历
     calendarDrawerVisible: false,
+    // 查询范围：all=全部，year=年，month=月
+    queryRange: 'month'
   }
 
   componentDidMount() {
@@ -96,8 +98,17 @@ class Index extends Component {
   }
 
   queryMonthStats = () => {
+    const { selectedMonth, queryRange } = this.state;
+    let year = ''
+    let mon = ''
+    if (queryRange === 'month') { // 选择的年和月
+      year = dayjs(selectedMonth).year()
+      mon = dayjs(selectedMonth).month() + 1
+    } else if (queryRange === 'year') { // 只选择年
+      year = dayjs(selectedMonth).year()
+    }
     this.setState({ loading: true })
-    fetch(`/api/auth/stats/total?year=${dayjs(this.state.selectedMonth).year()}&month=${dayjs(this.state.selectedMonth).month() + 1}`)
+    fetch(`/api/auth/stats/total?year=${year}&month=${mon}`)
       .then(res => {
         const { Income = 0, Expenses = 0, Liabilities = 0, Assets = 0 } = res;
         this.setState({ Income, Expenses, Liabilities, Assets })
@@ -105,9 +116,17 @@ class Index extends Component {
   }
 
   queryTransactionList = () => {
-    const { type, selectedMonth } = this.state
+    const { type, selectedMonth, queryRange } = this.state
+    let year = ''
+    let mon = ''
+    if (queryRange === 'month') { // 选择的年和月
+      year = dayjs(selectedMonth).year()
+      mon = dayjs(selectedMonth).month() + 1
+    } else if (queryRange === 'year') { // 只选择年
+      year = dayjs(selectedMonth).year()
+    }
     this.setState({ listLoading: true })
-    fetch(`/api/auth/transaction?type=${type}&year=${dayjs(selectedMonth).year()}&month=${dayjs(selectedMonth).month() + 1}`)
+    fetch(`/api/auth/transaction?type=${type}&year=${year}&month=${mon}`)
       .then(transactionList => {
         const transactionDateGroup = {}
         transactionList.forEach(transaction => {
@@ -130,7 +149,14 @@ class Index extends Component {
   }
 
   handleChangeMonth = (selectedMonth) => {
-    this.setState({ selectedMonth }, () => {
+    let queryRange = 'month'
+    if (!selectedMonth) {
+      queryRange = 'all'
+    } else if (selectedMonth.length === 4) {
+      queryRange = 'year'
+    }
+    console.log(queryRange)
+    this.setState({ selectedMonth, queryRange }, () => {
       this.queryMonthStats();
       this.queryTransactionList();
     })
@@ -184,12 +210,18 @@ class Index extends Component {
     this.setState({ calendarDrawerVisible: false })
   }
 
+  getQueryRangeText() {
+    if (this.state.queryRange === 'all') return "全部";
+    if (this.state.queryRange === 'year') return "年";
+    return "月";
+  }
+
   render() {
     if (this.context.theme !== this.theme) {
       this.theme = this.context.theme
     }
 
-    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible, tagTransactionDrawerVisible } = this.state
+    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible, tagTransactionDrawerVisible, selectedMonth } = this.state
     const transactionGroups = Object.values(transactionDateGroup);
     return (
       <div className="index-page page">
@@ -199,8 +231,8 @@ class Index extends Component {
             &nbsp;&nbsp;{hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
           </div>
           <div>
-            {this.state.Assets > 0 && !hideMoney && <Tag icon={<RiseOutlined />} color="#f50" >月资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
-            {this.state.Assets < 0 && !hideMoney && <Tag icon={<FallOutlined />} color="#1DA57A">月资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
+            {this.state.Assets > 0 && !hideMoney && <Tag icon={<RiseOutlined />} color="#f50" >{this.getQueryRangeText()}资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
+            {this.state.Assets < 0 && !hideMoney && <Tag icon={<FallOutlined />} color="#1DA57A">{this.getQueryRangeText()}资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
             <Button size="small" icon={<AccountBookOutlined />} onClick={this.handleOpenCalendarDrawer}>日历</Button>&nbsp;&nbsp;
             <Button size="small" icon={<CloudUploadOutlined />} onClick={this.handleNavigateImportPage}>导入</Button>&nbsp;&nbsp;
             <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
@@ -209,13 +241,13 @@ class Index extends Component {
         <div style={{ textAlign: 'center' }}>
           <Row>
             <Col span={8}>
-              <StatisticAmount hide={hideMoney} title={`本月${AccountTypeDict['Income']}`} value={Math.abs(this.state.Income)} loading={loading} prefix={this.state.Income > 0 ? '-' : '+'} valueStyle={{ color: '#cf1322' }} />
+              <StatisticAmount hide={hideMoney} title={`${this.getQueryRangeText()}${AccountTypeDict['Income']}`} value={Math.abs(this.state.Income)} loading={loading} prefix={this.state.Income > 0 ? '-' : '+'} valueStyle={{ color: '#cf1322' }} />
             </Col>
             <Col span={8}>
-              <StatisticAmount hide={hideMoney} title={`本月${AccountTypeDict['Expenses']}`} value={Math.abs(this.state.Expenses)} loading={loading} prefix={this.state.Expenses >= 0 ? '-' : '+'} valueStyle={{ color: '#3f8600' }} />
+              <StatisticAmount hide={hideMoney} title={`${this.getQueryRangeText()}${AccountTypeDict['Expenses']}`} value={Math.abs(this.state.Expenses)} loading={loading} prefix={this.state.Expenses >= 0 ? '-' : '+'} valueStyle={{ color: '#3f8600' }} />
             </Col>
             <Col span={8}>
-              <StatisticAmount hide={hideMoney} title={`本月${AccountTypeDict['Liabilities']}`} value={Math.abs(this.state.Liabilities)} loading={loading} prefix={this.state.Liabilities > 0 ? '+' : '-'} valueStyle={{ color: '#3f8600' }} />
+              <StatisticAmount hide={hideMoney} title={`${this.getQueryRangeText()}${AccountTypeDict['Liabilities']}`} value={Math.abs(this.state.Liabilities)} loading={loading} prefix={this.state.Liabilities > 0 ? '+' : '-'} valueStyle={{ color: '#3f8600' }} />
             </Col>
           </Row>
         </div>
