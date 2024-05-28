@@ -81,12 +81,20 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                           description={
                             <div>
                               {item.startDate}{item.endDate ? '~' + item.endDate : ''}&nbsp;
-                              {item.currency || ''}
                               {
-                                item.price &&
-                                <Tooltip title={item.priceDate}>
-                                  <span>≈{item.price}</span>
-                                </Tooltip>
+                                item.currencies &&
+                                item.currencies.map(c => (
+                                  <span>
+                                    <span>{c.currency}</span>
+                                    {
+                                      (c.isAnotherCurrency && c.price) &&
+                                      <Tooltip title={c.priceDate}>
+                                        <span>≈{c.price}</span>
+                                      </Tooltip>
+                                    }
+                                    &nbsp;
+                                  </span>
+                                ))
                               }
                             </div>
                           }

@@ -156,6 +156,19 @@ class AddTransactionDrawer extends Component {
     return ''
   }
 
+  // 是否需要填充账户货币和主货币间的汇率转换
+  needFillAccountCommodityRate = (account) => {
+    const acc = this.state.accounts.filter(acc => acc.account === account)[0]
+    if (!acc) {
+      return false
+    }
+    if (acc.currency === this.props.commodity.currency) {
+      return false;
+    }
+    // 是其他货币且没有初始化汇率
+    return acc.isAnotherCurrency && !acc.priceDate
+  }
+
   handleSubmit = (values) => {
     const { divideCount, divideCycle } = values
     if (divideCount && divideCount > 0) {
@@ -390,7 +403,7 @@ class AddTransactionDrawer extends Component {
                             </Select>
                           </Form.Item>
                           {
-                            (accountCommodity && accountCommodity !== this.props.commodity.currency && (!selectAccount.isAnotherCurrency || !selectAccount.priceDate)) &&
+                            this.needFillAccountCommodityRate(selectAccount) &&
                             <Fragment>
                               <Form.Item
                                 hidden
