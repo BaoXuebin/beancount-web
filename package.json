@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "homepage": "web",
-  "proxy": "http://localhost:10000",
+  "proxy": "http://localhost:3001",
   "dependencies": {
     "@craco/craco": "^6.2.0",
     "antd": "^4.20.7",

@@ -5,6 +5,7 @@ import Decimal from 'decimal.js';
 import React, { Component, Fragment } from 'react';
 import { fetch, getAccountIcon } from '../config/Util';
 import AccountIcon from './AccountIcon';
+import AccountCurrencySelect from './AccountCurrencySelect';
 
 const { Option } = Select;
 
@@ -158,15 +159,33 @@ class AddTransactionDrawer extends Component {
 
   // 是否需要填充账户货币和主货币间的汇率转换
   needFillAccountCommodityRate = (account) => {
-    const acc = this.state.accounts.filter(acc => acc.account === account)[0]
+    if (!account) {
+      return false;
+    }
+    const acc = this.state.accounts.filter(acc => acc.account === account.account)[0]
     if (!acc) {
       return false
     }
     if (acc.currency === this.props.commodity.currency) {
       return false;
     }
+    const currency = acc.currencies.filter(currency => currency.currency === acc.currency)[0]
+    if (currency.isAnotherCurrency === undefined) {
+      return true
+    }
     // 是其他货币且没有初始化汇率
-    return acc.isAnotherCurrency && !acc.priceDate
+    return !currency.priceDate
+  }
+
+  // 切换账户货币
+  handleChangeAccountCurrency = (account, accountCurrency) => {
+    const newAccounts = this.state.accounts.map(acc => {
+      if (acc.account === account.account) {
+        acc.currency = accountCurrency
+      }
+      return acc
+    })
+    this.setState({ accounts: newAccounts })
   }
 
   handleSubmit = (values) => {
@@ -265,7 +284,7 @@ class AddTransactionDrawer extends Component {
       const entries = template.entries.map(e => {
         const accs = this.state.accounts.filter(a => a.account === e.account)
         if (accs && accs.length === 1) {
-          return {...accs[0], number: e.number}
+          return { ...accs[0], number: e.number }
         }
         return e
       })
@@ -373,6 +392,7 @@ class AddTransactionDrawer extends Component {
                 return (
                   <div>
                     {fields.map(field => {
+                      console.log(this.formRef.current.getFieldsValue())
                       let accountCommodity = null
                       let selectAccount = this.formRef.current.getFieldsValue().entries[field.name];
                       if (selectAccount) {
@@ -436,7 +456,17 @@ class AddTransactionDrawer extends Component {
                               <Input
                                 type="number"
                                 step="0.01"
-                                addonBefore={(selectAccount && selectAccount.price) ? `${accountCommodity}≈${selectAccount.price}${this.props.commodity.currency}` : accountCommodity}
+                                addonBefore={
+                                  selectAccount ? <AccountCurrencySelect
+                                    defaultValue={selectAccount.currency}
+                                    currencies={selectAccount.currencies}
+                                    ledgerCurrency={this.props.commodity.currency}
+                                    onChange={(selectedAccountCurrency) => {
+                                      selectAccount.currency = selectedAccountCurrency
+                                      this.handleChangeAccountCurrency(selectAccount, selectedAccountCurrency)
+                                    }}
+                                  /> : null
+                                }
                                 placeholder={balanceAmount ? `${balanceAmount}(按Enter键可快速保存)` : `${this.state.isDivide ? '预支分期总' : ''}金额`}
                                 onChange={this.handleChangeAmount}
                                 style={{ flex: 1 }}
