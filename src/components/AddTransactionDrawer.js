@@ -65,14 +65,49 @@ class AddTransactionDrawer extends Component {
     if (this.formRef.current
       && nextProps.defaultAccounts && nextProps.defaultAccounts.length > 0
       && (!this.props.defaultAccounts || nextProps.defaultAccounts[0].account !== this.props.defaultAccounts[0].account)) {
-      this.formRef.current.setFieldsValue({ entries: [...nextProps.defaultAccounts] })
+      this.formRef.current.setFieldsValue({ entries: this.formatEnties([...nextProps.defaultAccounts]) })
     }
+  }
+
+  formatEnties = (accounts) => {
+    /**
+     * account=账户
+     * currency=账户货币单位
+     * priceCommodity=计价货币单位
+     * price=汇率
+     */
+    const result = accounts.map(acc => this.formatOneEntity(acc, acc.currency || this.props.commodity.currency))
+    console.log(result)
+    return result
+  }
+
+  formatOneEntity = (acc, currency) => {
+    /**
+     * account=账户
+     * currency=账户货币单位
+     * priceCommodity=计价货币单位
+     * price=汇率
+     */
+    acc.currency = currency
+    if (currency !== this.props.commodity.currency) {
+      if (acc.currencies && acc.currencies.length > 0) {
+        const matchCurrencies = acc.currencies.filter(cur => cur.currency === currency)
+        if (matchCurrencies && matchCurrencies.length > 0) {
+          acc.price = matchCurrencies[0].price
+          acc.priceCommodity = this.props.commodity.currency
+        }
+      }
+    } else {
+      delete acc.price
+      delete acc.priceCommodity
+    }
+    return acc
   }
 
   queryAllValidAccounts = () => {
     fetch('/api/auth/account/valid')
       .then(accounts => {
-        this.setState({ accounts })
+        this.setState({ accounts: this.formatEnties(accounts) })
       }).catch(console.error)
   }
 
@@ -133,14 +168,7 @@ class AddTransactionDrawer extends Component {
 
   handleChangeAccount = (account, idx) => {
     const entries = this.formRef.current.getFieldsValue().entries;
-    const acc = this.getAccount(account)
-    if (acc) {
-      // 账户货币单位不同，需要指定汇率
-      entries[idx] = acc
-      if (acc.currency !== this.props.commodity.currency) {
-        entries[idx].priceCommodity = this.props.commodity.currency
-      }
-    }
+    entries[idx] = this.getAccount(account)
     this.formRef.current.setFieldsValue({ entries })
   }
 
@@ -169,23 +197,16 @@ class AddTransactionDrawer extends Component {
     if (acc.currency === this.props.commodity.currency) {
       return false;
     }
-    const currency = acc.currencies.filter(currency => currency.currency === acc.currency)[0]
-    if (currency.isAnotherCurrency === undefined) {
-      return true
-    }
-    // 是其他货币且没有初始化汇率
-    return !currency.priceDate
+    return true
   }
 
   // 切换账户货币
-  handleChangeAccountCurrency = (account, accountCurrency) => {
-    const newAccounts = this.state.accounts.map(acc => {
-      if (acc.account === account.account) {
-        acc.currency = accountCurrency
-      }
-      return acc
-    })
-    this.setState({ accounts: newAccounts })
+  handleChangeAccountCurrency = (account, accountCurrency, entryId) => {
+    const targetAccount = this.getAccount(account.account)
+    // 刷新表单
+    const { entries } = this.formRef.current.getFieldsValue()
+    entries[entryId] = this.formatOneEntity(targetAccount, accountCurrency)
+    this.formRef.current.setFieldsValue({ entries })
   }
 
   handleSubmit = (values) => {
@@ -233,6 +254,8 @@ class AddTransactionDrawer extends Component {
     fetch('/api/auth/transaction', { method: 'POST', body: values })
       .then(res => {
         message.success('添加成功')
+        // 更新账户列表
+        this.queryAllValidAccounts()
         this.formRef.current.resetFields()
         this.formRef.current.setFieldsValue({ date: dayjs().format('YYYY-MM-DD') })
         const { payees } = this.state
@@ -392,7 +415,6 @@ class AddTransactionDrawer extends Component {
                 return (
                   <div>
                     {fields.map(field => {
-                      console.log(this.formRef.current.getFieldsValue())
                       let accountCommodity = null
                       let selectAccount = this.formRef.current.getFieldsValue().entries[field.name];
                       if (selectAccount) {
@@ -463,7 +485,7 @@ class AddTransactionDrawer extends Component {
                                     ledgerCurrency={this.props.commodity.currency}
                                     onChange={(selectedAccountCurrency) => {
                                       selectAccount.currency = selectedAccountCurrency
-                                      this.handleChangeAccountCurrency(selectAccount, selectedAccountCurrency)
+                                      this.handleChangeAccountCurrency(selectAccount, selectedAccountCurrency, field.name)
                                     }}
                                   /> : null
                                 }

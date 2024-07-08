@@ -14,7 +14,7 @@ export default ({ currencies = [], ledgerCurrency, defaultValue, onChange }) => 
         currencies.map(
           ({ price, currency }) =>
             <Select.Option value={currency}>
-              {(price === undefined || currency === ledgerCurrency) ? currency : `${currency}≈${price}${ledgerCurrency}`}
+              {currency}
             </Select.Option>
         )
       }

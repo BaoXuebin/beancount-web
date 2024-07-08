@@ -109,7 +109,7 @@ class AccountTransactionDrawer extends Component {
                             {
                               isSale ?
                                 <Fragment>
-                                  <Tag>成本: {item.costPrice} ({item.costDate})</Tag>
+                                  <Tag>持仓成本: {item.costPrice} ({item.costDate})</Tag>
                                   <Tag>确认净值: {item.price}</Tag>
                                   {
                                     investProfit >= 0 ?
@@ -124,7 +124,7 @@ class AccountTransactionDrawer extends Component {
                                   }
                                 </Fragment> :
                                 <Fragment>
-                                  <Tag>净值: {item.costPrice}</Tag>
+                                  <Tag>{item.isAnotherCurrency ? '汇率' : '购入净值'}: {item.costPrice}</Tag>
                                   {/* <Tag>持仓: {item.costPrice} / {AccountAmount(editAccount, costAmount, item.costCommoditySymbol)}</Tag> */}
                                 </Fragment>
                             }
