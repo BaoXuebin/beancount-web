@@ -1,7 +1,7 @@
 import { BookOutlined, CalendarOutlined, DownOutlined, ExclamationCircleOutlined, PlusOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Modal, Switch } from 'antd';
 import React, { Component, Fragment } from 'react';
-import { fetch } from '../config/Util';
+import { fetch, redirectHomePage } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 
@@ -21,6 +21,12 @@ class Ledger extends Component {
     selectedLedger: {},
     ledgers: [],
     config: {}
+  }
+
+  componentWillMount() {
+    if (window.localStorage.getItem('ledgerId')) {
+      redirectHomePage()
+    }
   }
 
   componentDidMount() {

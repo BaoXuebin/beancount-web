@@ -63,9 +63,9 @@ export const fetch = (url, { method, headers, body, hintError } = {}) => {
           } else if (code === 1008) {
             message.error("密钥不匹配")
           } else if (code === 1010) {
-            window.location.href = '/web/#/ledger';
+            redirectLedgerPage()
           } else if (code === 401) {
-            window.location.href = '/web/#/ledger';
+            redirectLedgerPage()
           } else {
             message.error('请求失败，请刷新页面重试');
           }
@@ -74,6 +74,15 @@ export const fetch = (url, { method, headers, body, hintError } = {}) => {
       })
       .catch((e) => { message.error('请求失败，请刷新页面重试'); reject(e); });
   })
+}
+
+export const redirectLedgerPage = () => {
+  window.localStorage.removeItem('ledgerId')
+  window.location.href = '/web/#/ledger';
+}
+
+export const redirectHomePage = () => {
+  window.location.href = '/web/#/';
 }
 
 export const getCurrentMonth = () => dayjs().format('YYYY-M')
