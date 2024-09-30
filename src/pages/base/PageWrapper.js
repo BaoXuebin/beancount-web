@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import Config from '../../config/Config';
 import { fetch } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
-import './styles/PageWrapper.css';
 import { WarningOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
+
+import './styles/PageWrapper.css';
 
 class PageWrapper extends Component {
 
@@ -48,10 +49,12 @@ class PageWrapper extends Component {
           <header>
             <nav className="navbar">
               <div className="container">
-                <div className="navbar-header header-logo" to="/">
-                  {/* <img src={LogoImage} width="16" height="16" /> */}
-                  <Link to="/">{title}</Link>
-                </div>
+                <Link to="/">
+                  <div className="navbar-header header-logo">
+                    {/* <img src={LogoImage} /> */}
+                    {title}
+                  </div>
+                </Link>
                 <div className="menu navbar-right">
                   {
                     this.state.error.length > 0 && <a><WarningOutlined style={{ color: 'red' }} onClick={this.openErrorModal} /></a>

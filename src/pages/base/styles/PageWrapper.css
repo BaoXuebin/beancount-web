@@ -26,6 +26,11 @@
   align-items: center;
 }
 
+.header-logo img {
+  max-width: 32px;
+  margin: 0px 4px 4px 0px;
+}
+
 .navbar .menu a {
   padding: 0 8px;
 }

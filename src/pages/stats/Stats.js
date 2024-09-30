@@ -6,6 +6,7 @@ import AccountDayTrendChart from '../../components/chart/AccountDayTrendChart';
 import IncomeExpensesLineChart from '../../components/chart/IncomeExpensesLineChart';
 import PayeeChart from '../../components/chart/PayeeChart';
 import SubAccountPercentPie from '../../components/chart/SubAccountPercentPie';
+import AccountSankeyChart from '../../components/chart/AccountSankeyChart';
 import StatisticAmount from '../../components/StatisticAmount';
 import { AccountTypeDict, defaultIfEmpty, fetch, getCurrentMonth, getLastMonth } from '../../config/Util';
 import ThemeContext from '../../context/ThemeContext';
@@ -153,6 +154,9 @@ class Stats extends Component {
           </Tabs.TabPane>
           <Tabs.TabPane tab="账户分布占比" key="4">
             <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="资产流向统计" key="6">
+            <AccountSankeyChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="商户消费排行" key="5">
             <PayeeChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
