@@ -4,12 +4,11 @@ import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component } from 'react';
 import { Fragment } from 'react/cjs/react.production.min';
-import AccountAmount from '../components/AccountAmount';
 import AccountIcon from '../components/AccountIcon';
 import AccountSyncPriceDrawer from '../components/AccountSyncPriceDrawer';
 import AccountTransactionDrawer from '../components/AccountTransactionDrawer';
 import CommodityPriceChartDrawer from '../components/CommodityPriceChartDrawer';
-import { fetch, getAccountCata, getAccountIcon, getAccountName } from '../config/Util';
+import { fetch, getAccountCata, getAccountIcon, getAccountName, formatCurrency } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 import './styles/Account.css';
@@ -48,7 +47,7 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                   totalAmount = accounts.map(acc => Decimal(acc.marketNumber || 0)).reduce((a, b) => a.plus(b))
                 }
               }
-              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 ${(totalAmount && !hideMoney) ? `(${AccountAmount(groupByAccount.id, totalAmount, commodity.symbol)})` : ''}`}>
+              return <Panel key={groupByAccount.id} header={`${groupByAccount.children.length}个${groupByAccount.name}账户 ${(totalAmount && !hideMoney) ? `(${formatCurrency(totalAmount, commodity, groupByAccount.id)})` : ''}`}>
                 <List
                   itemLayout="horizontal"
                   dataSource={groupByAccount.children}
@@ -59,10 +58,10 @@ const AccountList = ({ hideMoney, loading, accounts, onEdit, commodity, onAddTra
                     } else if (item.marketNumber) {
                       const positions = (item.positions || []).filter(p => p.currency !== item.marketCurrency)
                       if (positions.length > 0) {
-                        actions.push(<span>{positions.map(p => AccountAmount(item.account, p.number, p.currencySymbol))}</span>)
-                        actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
+                        actions.push(<span>{positions.map(p => formatCurrency(p.number, p.currencySymbol, item.account))}</span>)
+                        actions.push(<div>{formatCurrency(item.marketNumber, item.marketCurrencySymbol, item.account)}</div>)
                       } else {
-                        actions.push(<div>{AccountAmount(item.account, item.marketNumber, item.marketCurrencySymbol)}</div>)
+                        actions.push(<div>{formatCurrency(item.marketNumber, item.marketCurrencySymbol, item.account)}</div>)
                       }
                     }
                     if (item.loading) {

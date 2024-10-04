@@ -10,7 +10,7 @@ import CalendarDrawer from '../components/CalendarDrawer';
 import MonthSelector from '../components/MonthSelector';
 import StatisticAmount from '../components/StatisticAmount';
 import TagTransactionDrawer from '../components/TagTransactionDrawer';
-import { AccountTypeDict, fetch, getAccountIcon, getAccountName } from '../config/Util';
+import { AccountTypeDict, fetch, formatCurrency, getAccountIcon, getAccountName } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 import './styles/Index.css';
@@ -231,8 +231,8 @@ class Index extends Component {
             &nbsp;&nbsp;{hideMoney ? <Button size="small" icon={<EyeInvisibleOutlined />} onClick={this.handleHideMoney}></Button> : <Button size="small" icon={<EyeOutlined />} onClick={this.handleHideMoney}></Button>}
           </div>
           <div>
-            {this.state.Assets > 0 && !hideMoney && <Tag icon={<RiseOutlined />} color="#f50" >{this.getQueryRangeText()}资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
-            {this.state.Assets < 0 && !hideMoney && <Tag icon={<FallOutlined />} color="#1DA57A">{this.getQueryRangeText()}资产：{AccountAmount('Assets:', this.state.Assets)}</Tag>}
+            {this.state.Assets > 0 && !hideMoney && <Tag icon={<RiseOutlined />} color="#f50" >{this.getQueryRangeText()}资产：{formatCurrency(this.state.Assets, this.props.commodity, 'Assets', true)}</Tag>}
+            {this.state.Assets < 0 && !hideMoney && <Tag icon={<FallOutlined />} color="#1DA57A">{this.getQueryRangeText()}资产：{formatCurrency(this.state.Assets, this.props.commodity, 'Assets', true)}</Tag>}
             <Button size="small" icon={<AccountBookOutlined />} onClick={this.handleOpenCalendarDrawer}>日历</Button>&nbsp;&nbsp;
             <Button size="small" icon={<CloudUploadOutlined />} onClick={this.handleNavigateImportPage}>导入</Button>&nbsp;&nbsp;
             <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
@@ -247,7 +247,7 @@ class Index extends Component {
               <StatisticAmount hide={hideMoney} title={`${this.getQueryRangeText()}${AccountTypeDict['Expenses']}`} value={Math.abs(this.state.Expenses)} loading={loading} prefix={this.state.Expenses >= 0 ? '-' : '+'} valueStyle={{ color: '#3f8600' }} />
             </Col>
             <Col span={8}>
-              <StatisticAmount hide={hideMoney} title={`${this.getQueryRangeText()}${AccountTypeDict['Liabilities']}`} value={Math.abs(this.state.Liabilities)} loading={loading} prefix={this.state.Liabilities > 0 ? '+' : '-'} valueStyle={{ color: '#3f8600' }} />
+              <StatisticAmount hide={hideMoney} title={`${this.getQueryRangeText()}${AccountTypeDict['Liabilities']}`} value={Math.abs(this.state.Liabilities)} loading={loading} prefix={this.state.Liabilities > 0 ? '-' : '+'} valueStyle={{ color: '#3f8600' }} />
             </Col>
           </Row>
         </div>
@@ -289,6 +289,7 @@ class Index extends Component {
         {
           this.state.selectedAccount &&
           <AccountTransactionDrawer
+            commodity={this.props.commodity}
             account={this.state.selectedAccount}
             visible={accountTransactionDrawerVisible}
             onClose={this.handleCloseAccountTransactionDrawer}
@@ -305,6 +306,7 @@ class Index extends Component {
         {
           this.state.selectedMonth &&
           <CalendarDrawer
+            commodity={this.props.commodity}
             month={this.state.selectedMonth}
             visible={this.state.calendarDrawerVisible}
             onClose={this.handleCloseCalendarDrawer}

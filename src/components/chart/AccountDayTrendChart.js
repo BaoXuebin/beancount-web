@@ -1,7 +1,7 @@
 import { Segmented, Select, Spin } from 'antd';
 import { Chart, Interval, Tooltip } from "bizcharts";
 import React, { Component } from "react";
-import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
+import { AccountTypeDict, defaultIfEmpty, fetch, formatCurrency, formatDate } from '../../config/Util';
 
 const defaultAccount = [{ value: 'Expenses', label: AccountTypeDict['Expenses'] }]
 
@@ -11,7 +11,7 @@ class AccountDayTrendChart extends Component {
     loading: false,
     dayAmountData: [],
     type: 'day',
-    accountPrefix: 'Expenses'
+    accountPrefix: defaultIfEmpty(this.props.selectedAccounts, defaultAccount)[0].value
   }
 
   componentDidMount() {
@@ -38,8 +38,13 @@ class AccountDayTrendChart extends Component {
       }
     }
     fetch(`/api/auth/stats/account/trend?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}&type=${type}`)
-      .then(dayAmountData => {
-        this.setState({ dayAmountData })
+      .then(data => {
+        if (data && data.length > 0) {
+          data.forEach(d => {
+            d.date = formatDate(d.date)
+          });
+        }
+        this.setState({ dayAmountData: data })
       }).finally(() => { this.setState({ loading: false }) })
   }
 
@@ -72,12 +77,20 @@ class AccountDayTrendChart extends Component {
         </div>
         <Spin spinning={this.state.loading}>
           <Chart height={480} autoFit data={this.state.dayAmountData} interactions={['active-region']} padding={[30, 30, 30, 50]} >
-            <Interval position="date*amount" />
-            <Tooltip>
+            <Interval
+              position="date*amount"
+              tooltip={['date*amount', (date, amount) => {
+                return {
+                  name: '合计',
+                  value: formatCurrency(amount, this.props.commodity)
+                }
+              }]}
+            />
+            {/* <Tooltip>
               {(title, items) => {
-                return <div style={{ padding: '.8rem 1rem' }}>{title}: {items[0].data.amount}元</div>
+                return <div style={{ padding: '.8rem 1rem' }}>{formatDate(title)}: {formatCurrency(items[0].data.amount, this.props.commodity)}</div>
               }}
-            </Tooltip>
+            </Tooltip> */}
           </Chart>
         </Spin>
       </div>

@@ -2,7 +2,7 @@ import { FallOutlined, RiseOutlined } from '@ant-design/icons';
 import { Drawer, List, Tag } from 'antd';
 import Decimal from 'decimal.js';
 import { Component, Fragment } from 'react';
-import { fetch, getAccountIcon } from '../config/Util';
+import { fetch, formatCurrency, getAccountIcon } from '../config/Util';
 import AccountAmount from './AccountAmount';
 import AccountIcon from './AccountIcon';
 import MonthSelector from './MonthSelector';
@@ -92,7 +92,7 @@ class AccountTransactionDrawer extends Component {
                   actions={[
                     <div style={{ textAlign: 'right' }}>
                       <div>{item.number ? AccountAmount(editAccount, item.number, item.currencySymbol, item.currency) : ''}</div>
-                      <div style={{ fontSize: '12px' }}>{item.balance}</div>
+                      <div style={{ fontSize: '12px' }}>{formatCurrency(item.balance, this.props.commodity)}</div>
                     </div>
                   ]}
                 >

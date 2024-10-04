@@ -1,7 +1,7 @@
 import { Segmented, Spin } from 'antd';
 import { Chart, Line, Point, Tooltip } from "bizcharts";
 import React, { Component } from "react";
-import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
+import { AccountTypeDict, defaultIfEmpty, fetch, formatCurrency, formatDate } from '../../config/Util';
 
 const defaultAccount = [{ value: 'Assets', label: AccountTypeDict['Assets'] }]
 
@@ -40,8 +40,13 @@ class AccountBalanceChart extends Component {
       }
     }
     fetch(`/api/auth/stats/account/balance?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}`)
-      .then(balanceData => {
-        this.setState({ balanceData })
+      .then(data => {
+        if (data && data.length > 0) {
+          data.forEach((item) => {
+            item.date = formatDate(item.date)
+          })
+        }
+        this.setState({ balanceData: data })
       }).finally(() => { this.setState({ loading: false }) })
   }
 
@@ -68,10 +73,26 @@ class AccountBalanceChart extends Component {
             data={this.state.balanceData}
             scale={{ amount: { alias: '合计', type: 'linear-strict' }, year: { range: [0, 1] } }}
           >
-
-            <Line position="date*amount" />
-            <Point position="date*amount" />
-            <Tooltip showCrosshairs follow={false} />
+            <Line
+              position="date*amount"
+              tooltip={['date*amount', (date, amount) => {
+                return {
+                  title: date,
+                  name: '合计',
+                  value: formatCurrency(amount, this.props.commodity),
+                };
+              }]}
+            />
+            <Point
+              position="date*amount"
+              tooltip={['date*amount', (date, amount) => {
+                return {
+                  title: date,
+                  name: '合计',
+                  value: formatCurrency(amount, this.props.commodity),
+                };
+              }]}
+            />
           </Chart>
         </Spin>
       </div >

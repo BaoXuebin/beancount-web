@@ -144,22 +144,22 @@ class Stats extends Component {
         </div>
         <Tabs defaultActiveKey="1" destroyInactiveTabPane activeKey={statsTab} centered style={{ marginTop: '2rem' }} onChange={this.handleChangeTab}>
           <Tabs.TabPane tab="月度收支统计图" key="1">
-            <IncomeExpensesLineChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} />
+            <IncomeExpensesLineChart chartLoading={this.state.chartLoading} selectedMonth={this.state.selectedMonth} commodity={this.props.commodity} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="资产负债统计" key="2">
-            <AccountBalanceChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
+            <AccountBalanceChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} commodity={this.props.commodity} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="损益账户统计" key="3">
-            <AccountDayTrendChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
+            <AccountDayTrendChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} commodity={this.props.commodity} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="账户分布占比" key="4">
-            <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
+            <SubAccountPercentPie chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} commodity={this.props.commodity} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="资产流向统计" key="6">
-            <AccountSankeyChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
+            <AccountSankeyChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} commodity={this.props.commodity} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="商户消费排行" key="5">
-            <PayeeChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} />
+            <PayeeChart chartLoading={this.state.chartLoading} selectedAccounts={this.state.selectedAccounts} selectedMonth={this.state.selectedMonth} commodity={this.props.commodity} />
           </Tabs.TabPane>
         </Tabs>
       </div >

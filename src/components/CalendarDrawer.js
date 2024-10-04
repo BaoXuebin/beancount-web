@@ -1,8 +1,7 @@
 import { Calendar, Drawer, Spin } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
-import { fetch } from '../config/Util';
-import AccountAmount from './AccountAmount';
+import { fetch, formatCurrency } from '../config/Util';
 import MonthSelector from './MonthSelector';
 import './styles/CalendarDrawer.css';
 
@@ -73,16 +72,12 @@ class CalendarDrawer extends Component {
           <div key={idx}>
             {
               item.account === 'Expenses' &&
-              <span className='expenses'>{AccountAmount(item.account, item.amount)}</span>
+              <span className='expenses'>{formatCurrency(item.amount, this.props.commodity, 'Expenses')}</span>
             }
             {
               item.account === 'Income' &&
-              <span className='income'>{AccountAmount(item.account, item.amount)}</span>
+              <span className='income'>{formatCurrency(item.amount, this.props.commodity, 'Income')}</span>
             }
-            {/* {
-              item.account === 'Liabilities' &&
-              <span className='income'>{AccountAmount(item.account, item.amount)}</span>
-            } */}
           </div>
         ))}
       </div>

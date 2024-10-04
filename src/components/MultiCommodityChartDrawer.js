@@ -1,7 +1,7 @@
 import { Avatar, Drawer, List, Skeleton, Spin } from 'antd';
 import { Chart, Legend, LineAdvance } from 'bizcharts';
 import React, { Component } from 'react';
-import { fetch } from '../config/Util';
+import { fetch, formatDate } from '../config/Util';
 
 class MultiCommodityChartDrawer extends Component {
 

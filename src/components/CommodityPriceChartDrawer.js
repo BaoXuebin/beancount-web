@@ -1,7 +1,7 @@
 import { Drawer, Spin } from 'antd';
 import { Chart, Legend, LineAdvance } from 'bizcharts';
 import React, { Component } from 'react';
-import { fetch } from '../config/Util';
+import { fetch, formatDate } from '../config/Util';
 
 class AccountCommodityChartDrawer extends Component {
 
@@ -23,7 +23,7 @@ class AccountCommodityChartDrawer extends Component {
         const commodityPrices = []
         prices.forEach(price => {
           commodityPrices.push({
-            date: price.date,
+            date: formatDate(price.date),
             commodity: price.commodity,
             value: Number(price.value),
           })

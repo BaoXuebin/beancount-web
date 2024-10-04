@@ -21,6 +21,7 @@ export const getAccountName = account => {
 }
 
 export const AccountTypeDict = {
+  '': '全部',
   'Income': '收入',
   'Expenses': '支出',
   'Liabilities': '负债',
@@ -106,4 +107,60 @@ export const getDaysInMonth = (year, month) => {
 
 export const defaultIfEmpty = (value, defaultValue) => {
   return value && value.length > 0 ? value : defaultValue;
+}
+
+export const addAllSelector = (value) => {
+  if (value && value.length > 0) {
+    return [{ value: '', label: AccountTypeDict[''] }, ...value]
+  }
+  return value
+}
+
+export const formatCurrency = (amount, commodity, account, showPositive) => {
+  if (account) {
+    if (account.startsWith('Income') || account.startsWith('Expenses')) {
+      amount = amount * -1
+      showPositive = showPositive === undefined && true
+    } else if (account.startsWith('Liabilities')) {
+      amount = amount * -1
+    }
+  }
+  const value = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+  let symbol = commodity
+  if (commodity && commodity.symbol) {
+    symbol = commodity.symbol
+  }
+  return ((showPositive && Number(amount) >= 0) ? '+' : '') + (symbol ? value.replace('$', symbol) : value)
+}
+
+export const formatPercent = (number, minFractionDigits = 0, maxFractionDigits = 2) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',               // 设置格式为百分比
+    minimumFractionDigits: minFractionDigits,  // 最少保留的小数位
+    maximumFractionDigits: maxFractionDigits   // 最多保留的小数位
+  }).format(number);
+}
+
+export const formatDate = (date) => {
+  if (!date) {
+    return date
+  }
+  const parts = date.split('-'); // 按照 "-" 分割输入字符串
+  // 如果只有年份
+  if (parts.length === 1) {
+    return `${parts[0]}年`;  // 直接返回年份 + "年"
+  }
+
+  // 如果是年份和月份
+  if (parts.length === 2) {
+    const year = parts[0];
+    const month = parts[1].length === 1 ? `0${parts[1]}` : parts[1]; // 保证月份有两位数字
+    return `${year}年${parseInt(month)}月`; // 使用parseInt去除月份的前导零
+  }
+  return dayjs(date).format('YYYY年MM月DD日')
 }

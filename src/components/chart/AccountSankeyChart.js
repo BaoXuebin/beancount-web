@@ -9,7 +9,7 @@ import {
   getTheme
 } from "bizcharts";
 import DataSet from "@antv/data-set";
-import { AccountTypeDict, defaultIfEmpty, fetch } from "../../config/Util";
+import { AccountTypeDict, addAllSelector, defaultIfEmpty, fetch, formatCurrency, getAccountName } from "../../config/Util";
 import { Segmented, Spin } from "antd";
 
 const defaultAccount = [{ value: 'Assets', label: AccountTypeDict['Assets'] }]
@@ -26,10 +26,21 @@ const colors = getTheme().colors20;
 
 class AccountSankeyChart extends Component {
 
+  _ds = new DataSet();
+  _nodeValues = {}
+
   state = {
-    dataView: null,
+    sankeyData: {
+      nodes: [],
+      links: []
+    },
+    dataView: {
+      nodes: [],
+      links: []
+    },
     loading: false,
-    accountPrefix: defaultIfEmpty(this.props.selectedAccounts, defaultAccount)[0].value
+    accountPrefix: addAllSelector(defaultIfEmpty(this.props.selectedAccounts, defaultAccount))[0].value,
+    level: ''
   }
 
   componentDidMount() {
@@ -41,14 +52,14 @@ class AccountSankeyChart extends Component {
       this.querySankeyData(nextProps.selectedMonth)
     }
     if (nextProps.selectedAccounts !== this.props.selectedAccounts) {
-      this.setState({ accountPrefix: defaultIfEmpty(nextProps.selectedAccounts, defaultAccount)[0].value })
+      this.setState({ accountPrefix: addAllSelector(defaultIfEmpty(nextProps.selectedAccounts, defaultAccount))[0].value })
     }
   }
 
   querySankeyData = (selectedMonth) => {
     this.setState({ loading: true })
+    const { accountPrefix, level } = this.state;
     let year, month;
-    const { accountPrefix } = this.state;
     if (selectedMonth) {
       const yearAndMonth = selectedMonth.split('-').filter(a => a)
       if (yearAndMonth.length === 1) {
@@ -58,25 +69,31 @@ class AccountSankeyChart extends Component {
         month = yearAndMonth[1]
       }
     }
-    fetch(`/api/auth/stats/account/flow?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}`)
+    fetch(`/api/auth/stats/account/flow?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}&level=${level}`)
       .then((sankeyData) => {
-        const ds = new DataSet();
-        const dv = ds.createView().source(sankeyData, {
-          type: "graph",
-          edges: (d) => d.links,
-        });
-        dv.transform({
-          type: 'diagram.sankey',
-          sort: (a, b) => {
-            if (a.value > b.value) {
-              return 0
-            } else if (a.value < b.value) {
-              return -1
-            }
-            return 0
+        if (sankeyData && sankeyData.links && sankeyData.links.length > 0) {
+          const nodes = sankeyData.nodes
+          for (let link of sankeyData.links) {
+            this._nodeValues[nodes[link.source].name] = Number(this._nodeValues[nodes[link.source].name] || 0) + -1 * Number(link.value)
+            this._nodeValues[nodes[link.target].name] = Number(this._nodeValues[nodes[link.target].name] || 0) + Number(link.value)
           }
-        });
-        this.setState({ dataView: dv })
+          const dataView = this._ds.createView().source(sankeyData, {
+            type: "graph",
+            edges: (d) => d.links,
+          });
+          dataView.transform({
+            type: 'diagram.sankey',
+            sort: (a, b) => {
+              if (a.value > b.value) {
+                return 0
+              } else if (a.value < b.value) {
+                return -1
+              }
+              return 0
+            }
+          });
+          this.setState({ sankeyData, dataView })
+        }
       })
       .catch(function (error) {
         console.log("Request failed", error);
@@ -87,19 +104,36 @@ class AccountSankeyChart extends Component {
   }
 
   handleChangeAccount = (accountPrefix) => {
-    this.setState({ accountPrefix }, () => {
+    this.setState({
+      accountPrefix, dataView: {
+        nodes: [],
+        links: []
+      }
+    }, () => {
+      this.querySankeyData(this.props.selectedMonth)
+    })
+  }
+
+  handleChangeAccountLevel = (level) => {
+    this.setState({
+      level, dataView: {
+        nodes: [],
+        links: []
+      }
+    }, () => {
       this.querySankeyData(this.props.selectedMonth)
     })
   }
 
   render() {
-    const { selectedAccounts, chartLoading } = this.props
+    const { chartLoading } = this.props
     const { dataView, loading } = this.state
     if (chartLoading) {
       return <div style={{ height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>
     }
+
     // edge view
-    const edges = dataView && dataView.edges.map((edge) => {
+    const edges = (dataView && dataView.edges) ? dataView.edges.map((edge) => {
       return {
         source: edge.source.name,
         target: edge.target.name,
@@ -107,25 +141,29 @@ class AccountSankeyChart extends Component {
         y: edge.y,
         value: edge.value,
       };
-    });
-    const colorsMap = dataView?.nodes.reduce((pre, cur, idx) => {
+    }) : [];
+    const colorsMap = (dataView && dataView.nodes) ? dataView.nodes.reduce((pre, cur, idx) => {
       pre[cur.name] = colors[idx]
       return pre;
-    }, {})
+    }, {}) : {}
     return (
       <Fragment>
-        {/* <div style={{ marginBottom: '1rem' }}>
-          <Segmented options={defaultIfEmpty(selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
-        </div> */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <Segmented options={addAllSelector(defaultIfEmpty(this.props.selectedAccounts, defaultAccount))} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
+          <Segmented options={[
+            { value: '1', label: '账户类型' },
+            { value: '', label: '所有账户' }
+          ]} value={this.state.level} onChange={this.handleChangeAccountLevel} />
+        </div>
         <Spin spinning={loading}>
-          <div style={{ height: 800 }}>
-            {
-              dataView &&
-              <Chart interactions={['element-highlight']} height={800} autoFit={true} scale={scale} padding={[20, 20, 40]} >
-                <Tooltip showTitle={false} showMarkers={false} />
-                <Axis name="x" visible={true} />
-                <Axis name="y" visible={true} />
-                <Legend name='source' visible={true} />
+          {
+            (dataView.nodes.length === 0 || edges.length === 0) ?
+              <div style={{ height: '500px' }}></div> :
+              <Chart interactions={['element-highlight']} height={Math.min(dataView.nodes.length * 30 + 200, 1200)} autoFit={true} scale={scale} padding={[20, 20, 40]} >
+                {/* <Tooltip showTitle={true} showMarkers={false} /> */}
+                <Axis name="x" visible={false} />
+                <Axis name="y" visible={false} />
+                <Legend name='source' visible={false} />
                 <View padding={0} data={edges}>
                   <Geom
                     type="edge"
@@ -141,8 +179,9 @@ class AccountSankeyChart extends Component {
                       ["target*source*value",
                         (target, source, value) => {
                           return {
-                            name: source + " to " + target + "</span>",
-                            value,
+                            title: source + ' > ' + target,
+                            name: '合计',
+                            value: formatCurrency(value, this.props.commodity),
                           };
                         }]
                     }
@@ -156,21 +195,32 @@ class AccountSankeyChart extends Component {
                     style={{
                       stroke: "#fff",
                     }}
-
                     state={{
                       default: {},
                       active: { style: { stroke: 'red', lineWidth: 1.5, strokeOpacity: 0.9 } },
                     }}
-                    label={["name", {
-                      offsetY: 10,
-                      style: { fill: '#666' }
+                    label={["name", (name) => {
+                      return {
+                        content: getAccountName(name),
+                        offsetY: 10,
+                        style: { fill: '#666' }
+                      }
                     }]}
+                    tooltip={
+                      ["name*value",
+                        (name) => {
+                          return {
+                            title: name,
+                            name: '合计',
+                            value: formatCurrency(this._nodeValues[name], this.props.commodity)
+                          };
+                        }]
+                    }
                   >
                   </Geom>
                 </View>
               </Chart>
-            }
-          </div>
+          }
         </Spin>
       </Fragment>
     );

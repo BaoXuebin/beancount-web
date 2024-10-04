@@ -1,7 +1,7 @@
 import { Segmented, Spin } from 'antd';
 import { Chart, Coordinate, Interaction, Interval } from "bizcharts";
 import React, { Component } from "react";
-import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
+import { AccountTypeDict, defaultIfEmpty, fetch, formatCurrency } from '../../config/Util';
 
 const defaultAccount = [{ value: 'Expenses', label: AccountTypeDict['Expenses'] }]
 class PayeeChart extends Component {
@@ -71,7 +71,8 @@ class PayeeChart extends Component {
         </div>
         <Spin spinning={this.state.loading}>
           <Chart
-            height={560}
+            appendPadding={[0, 70, 0, 0]}
+            height={Math.max(this.state.payee.length * 30, 120)}
             data={this.state.payee}
             autoFit
             scale={{
@@ -86,19 +87,21 @@ class PayeeChart extends Component {
               label={[
                 "value",
                 (val) => ({
-                  position: "middle", // top|middle|bottom|left|right
-                  // offsetX: -30,
-                  // content: numeral(val).format('0,0'),
+                  position: "right", // top|middle|bottom|left|right
+                  offsetX: -8,
+                  content: this.state.type !== 'cot' ? formatCurrency(val, this.props.commodity) : `${val}次`,
                   style: {
-                    fill: "#fff",
+                    fill: "#3c3c3c",
                   },
                 }),
-                // {
-                //   layout: {
-                //     type: "overlap",
-                //   },
-                // },
               ]}
+              tooltip={['payee*value', (payee, value) => {
+                return {
+                  title: payee,
+                  name: '合计',
+                  value: this.state.type !== 'cot' ? formatCurrency(value, this.props.commodity) : `${value}次`
+                };
+              }]}
             />
             <Interaction type="active-region" />
           </Chart>

@@ -2,7 +2,7 @@ import { Segmented, Spin } from 'antd';
 import { Axis, Chart, Coordinate, Interaction, Interval, Tooltip } from "bizcharts";
 import Decimal from 'decimal.js';
 import React, { Component } from "react";
-import { AccountTypeDict, defaultIfEmpty, fetch } from '../../config/Util';
+import { AccountTypeDict, defaultIfEmpty, fetch, formatCurrency, formatPercent, getAccountName } from '../../config/Util';
 
 const defaultAccount = [{ value: 'Expenses', label: AccountTypeDict['Expenses'] }]
 class SubAccountPercentPie extends Component {
@@ -11,7 +11,7 @@ class SubAccountPercentPie extends Component {
     loading: false,
     subAccountPercentData: [],
     level: '1',
-    accountPrefix: 'Expenses'
+    accountPrefix: defaultIfEmpty(this.props.selectedAccounts, defaultAccount)[0].value
   }
 
   componentDidMount() {
@@ -47,7 +47,7 @@ class SubAccountPercentPie extends Component {
         this.setState({
           subAccountPercentData: res.map(r => {
             const subAccountAmount = Decimal(r.amount).toFixed(2)
-            return { item: r.account.replace(this.state.accountPrefix, '').replace(':', ''), count: Number(subAccountAmount), percent: Number(Decimal(subAccountAmount / totalAmount).toFixed(5)) }
+            return { item: r.account, count: Number(subAccountAmount), percent: Number(Decimal(subAccountAmount / totalAmount).toFixed(5)) }
           })
         })
       }).finally(() => { this.setState({ loading: false }) })
@@ -74,9 +74,8 @@ class SubAccountPercentPie extends Component {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <Segmented options={defaultIfEmpty(this.props.selectedAccounts, defaultAccount)} value={this.state.accountPrefix} onChange={this.handleChangeAccount} />
           <Segmented options={[
-            { value: '1', label: '一级子账户' },
-            { value: '2', label: '二级子账户' },
-            { value: '', label: '所有' }
+            { value: '1', label: '账户类型' },
+            { value: '', label: '所有账户' }
           ]} value={this.state.level} onChange={this.handleChangeAccountLevel} />
         </div>
         <Spin spinning={this.state.loading}>
@@ -94,11 +93,6 @@ class SubAccountPercentPie extends Component {
           }}
           >
             <Coordinate type="theta" radius={0.75} />
-            <Tooltip>
-              {(title, items) => {
-                return <div style={{ padding: '.8rem 1rem' }}>{title}: {items[0].data.count}元</div>
-              }}
-            </Tooltip>
             <Axis visible={false} />
             <Interval
               position="percent"
@@ -110,13 +104,15 @@ class SubAccountPercentPie extends Component {
               }}
               label={['count', {
                 content: (data) => {
-                  let item = data.item
-                  if (item.indexOf(':') >= 0) {
-                    const arr = item.split(':')
-                    item = arr[arr.length - 1]
-                  }
-                  return `${item}: ${Number(data.percent * 100).toFixed(2)}%`;
+                  return `${getAccountName(data.item)}: ${formatPercent(data.percent)}`;
                 },
+              }]}
+              tooltip={['item*percent*count', (item, percent, count) => {
+                return {
+                  title: item,
+                  name: '合计',
+                  value: `${formatCurrency(count, this.props.commodity)} (${formatPercent(percent)})`
+                }
               }]}
             />
             <Interaction type='element-single-selected' />

@@ -16,9 +16,9 @@
 }
 
 .calendar-drawer .date-cell .expenses {
-  color: #ff4d4f;
+  color: #1DA57A;
 }
 
 .calendar-drawer .date-cell .income {
-  color: #1DA57A;
+  color: #ff4d4f;
 }
