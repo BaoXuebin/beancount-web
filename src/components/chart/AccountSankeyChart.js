@@ -72,6 +72,7 @@ class AccountSankeyChart extends Component {
     fetch(`/api/auth/stats/account/flow?prefix=${accountPrefix}&year=${year || ''}&month=${month || ''}&level=${level}`)
       .then((sankeyData) => {
         if (sankeyData && sankeyData.links && sankeyData.links.length > 0) {
+          this._nodeValues = {}
           const nodes = sankeyData.nodes
           for (let link of sankeyData.links) {
             this._nodeValues[nodes[link.source].name] = Number(this._nodeValues[nodes[link.source].name] || 0) + -1 * Number(link.value)
