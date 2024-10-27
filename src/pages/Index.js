@@ -1,5 +1,5 @@
-import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined, FallOutlined, RiseOutlined } from '@ant-design/icons';
-import { Button, Col, Empty, List, Row, Spin, Tabs, Tag } from 'antd';
+import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined, FallOutlined, RiseOutlined, SettingOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
+import { Button, Col, Dropdown, Empty, List, message, Modal, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
 import AccountAmount from '../components/AccountAmount';
@@ -17,7 +17,7 @@ import './styles/Index.css';
 
 const TabPane = Tabs.TabPane
 
-const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer, onOpenTagDrawer }) => (
+const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer, onOpenTagDrawer, onOpenEditTransactionDrawer, OnDeleteTransaction }) => (
   <div style={{ minHeight: '400px' }}>
     {
       (!loading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
@@ -33,7 +33,43 @@ const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer
                 renderItem={item => (
                   <List.Item
                     actions={[
-                      item.number ? <div>{AccountAmount(item.account, item.number, item.currencySymbol, item.currency)}</div> : ''
+                      item.number ? <div>{AccountAmount(item.account, item.number, item.currencySymbol, item.currency)}</div> : '',
+                      <Dropdown
+                        trigger={['click']}
+                        menu={{
+                          items: [
+                            {
+                              label: (
+                                <a onClick={() => {
+                                  if (onOpenEditTransactionDrawer && typeof onOpenEditTransactionDrawer === 'function') {
+                                    onOpenEditTransactionDrawer(item)
+                                  }
+                                }}>
+                                  <EditOutlined />&nbsp;修改
+                                </a>
+                              ),
+                              key: 'edit',
+                            },
+                            {
+                              type: 'divider',
+                            },
+                            {
+                              label: (
+                                <a style={{ color: 'rgb(207, 19, 34)' }} onClick={() => {
+                                  if (OnDeleteTransaction && typeof OnDeleteTransaction === 'function') {
+                                    OnDeleteTransaction(item)
+                                  }
+                                }}>
+                                  <DeleteOutlined />&nbsp;删除
+                                </a>
+                              ),
+                              key: 'delete'
+                            },
+                          ]
+                        }}
+                      >
+                        <SettingOutlined />
+                      </Dropdown>
                     ]}
                   >
                     <List.Item.Meta
@@ -85,7 +121,10 @@ class Index extends Component {
     // 账单日历
     calendarDrawerVisible: false,
     // 查询范围：all=全部，year=年，month=月
-    queryRange: 'month'
+    queryRange: 'month',
+    editTransactionDrawerVisible: false,
+    editTransactionDetail: {},
+    getEditedTransactionDetailLoading: false,
   }
 
   componentDidMount() {
@@ -162,11 +201,11 @@ class Index extends Component {
     })
   }
 
-  handleOpenDrawer = () => {
+  handleOpenAddTransactionDrawer = () => {
     this.setState({ addTransactionDrawerVisible: true })
   }
 
-  handleCloseDrawer = () => {
+  handleCloseAddTransactionDrawer = () => {
     this.setState({ addTransactionDrawerVisible: false })
   }
 
@@ -177,7 +216,8 @@ class Index extends Component {
   handleAddTransaction = () => {
     this.queryMonthStats()
     this.queryTransactionList()
-    this.handleCloseDrawer()
+    this.handleCloseAddTransactionDrawer()
+    this.handleCloseEditTransactionDrawer()
   }
 
   handleHideMoney = () => {
@@ -210,6 +250,36 @@ class Index extends Component {
     this.setState({ calendarDrawerVisible: false })
   }
 
+  handleOpenEditTransactionDrawer = (item) => {
+    this.setState({ editTransactionDrawerVisible: true, getEditedTransactionDetailLoading: true })
+    fetch(`/api/auth/transaction/detail?id=${item.id}`)
+      .then(editTransactionDetail => {
+        this.setState({ editTransactionDetail })
+      }).catch(console.error).finally(() => { this.setState({ getEditedTransactionDetailLoading: false }) })
+  }
+
+  handleCloseEditTransactionDrawer = () => {
+    this.setState({ editTransactionDrawerVisible: false, editTransactionDetail: {} })
+  }
+
+  handleDeleteTransaction = (transaction) => {
+    Modal.confirm({
+      title: '确认删除?',
+      icon: <ExclamationCircleFilled />,
+      content: '删除后无法找回',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        return fetch(`/api/auth/transaction?id=${transaction.id}`, { method: 'DELETE' })
+          .then(() => {
+            message.success('删除成功')
+            this.handleAddTransaction()
+          }).catch(console.error).finally(() => { })
+      }
+    });
+  }
+
   getQueryRangeText() {
     if (this.state.queryRange === 'all') return "全部";
     if (this.state.queryRange === 'year') return "年";
@@ -221,7 +291,8 @@ class Index extends Component {
       this.theme = this.context.theme
     }
 
-    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible, tagTransactionDrawerVisible, selectedMonth } = this.state
+    const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible,
+      tagTransactionDrawerVisible, editTransactionDrawerVisible, editTransactionDetail, getEditedTransactionDetailLoading } = this.state
     const transactionGroups = Object.values(transactionDateGroup);
     return (
       <div className="index-page page">
@@ -235,7 +306,7 @@ class Index extends Component {
             {this.state.Assets < 0 && !hideMoney && <Tag icon={<FallOutlined />} color="#1DA57A">{this.getQueryRangeText()}资产：{formatCurrency(this.state.Assets, this.props.commodity, 'Assets', true)}</Tag>}
             <Button size="small" icon={<AccountBookOutlined />} onClick={this.handleOpenCalendarDrawer}>日历</Button>&nbsp;&nbsp;
             <Button size="small" icon={<CloudUploadOutlined />} onClick={this.handleNavigateImportPage}>导入</Button>&nbsp;&nbsp;
-            <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenDrawer}>记账</Button>
+            <Button type="primary" size="small" icon={<FormOutlined />} onClick={this.handleOpenAddTransactionDrawer}>记账</Button>
           </div>
         </div>
         <div style={{ textAlign: 'center' }}>
@@ -268,6 +339,8 @@ class Index extends Component {
               transactionGroups={transactionGroups}
               onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
               onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
+              onOpenEditTransactionDrawer={this.handleOpenEditTransactionDrawer}
+              OnDeleteTransaction={this.handleDeleteTransaction}
             />
           </TabPane>
           <TabPane tab="负债明细" key="Liabilities">
@@ -282,8 +355,13 @@ class Index extends Component {
         </Tabs>
         <AddTransactionDrawer
           {...this.props}
-          visible={addTransactionDrawerVisible}
-          onClose={this.handleCloseDrawer}
+          visible={addTransactionDrawerVisible || editTransactionDrawerVisible}
+          defaultTransaction={editTransactionDetail}
+          loading={getEditedTransactionDetailLoading}
+          onClose={() => {
+            this.handleCloseAddTransactionDrawer()
+            this.handleCloseEditTransactionDrawer()
+          }}
           onSubmit={this.handleAddTransaction}
         />
         {

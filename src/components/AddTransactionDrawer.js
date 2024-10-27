@@ -1,5 +1,5 @@
 import { CloseCircleOutlined, HourglassOutlined, PlusOutlined, TagsOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Space, Tag } from 'antd';
+import { AutoComplete, Button, Divider, Drawer, Form, Input, message, Select, Space, Spin, Tag } from 'antd';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import React, { Component, Fragment } from 'react';
@@ -52,6 +52,9 @@ class AddTransactionDrawer extends Component {
         this.queryAllTags()
       }, 1000)
     }
+    if (this.props.visible) {
+      this.setState({ drawerVisible: true })
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -67,6 +70,10 @@ class AddTransactionDrawer extends Component {
       && (!this.props.defaultAccounts || nextProps.defaultAccounts[0].account !== this.props.defaultAccounts[0].account)) {
       this.formRef.current.setFieldsValue({ entries: this.formatEnties([...nextProps.defaultAccounts]) })
     }
+    if (this.formRef.current && nextProps.defaultTransaction && nextProps.defaultTransaction.id) {
+      console.log(nextProps.defaultTransaction)
+      this.formRef.current.setFieldsValue(nextProps.defaultTransaction)
+    }
   }
 
   formatEnties = (accounts) => {
@@ -77,7 +84,6 @@ class AddTransactionDrawer extends Component {
      * price=汇率
      */
     const result = accounts.map(acc => this.formatOneEntity(acc, acc.currency || this.props.commodity.currency))
-    console.log(result)
     return result
   }
 
@@ -249,6 +255,9 @@ class AddTransactionDrawer extends Component {
       message.error("账目金额项不能为空")
       return
     }
+    if (this.props.defaultTransaction && this.props.defaultTransaction.id) {
+      values.id = this.props.defaultTransaction.id
+    }
 
     this.setState({ loading: true })
     fetch('/api/auth/transaction', { method: 'POST', body: values })
@@ -327,6 +336,9 @@ class AddTransactionDrawer extends Component {
   render() {
     return (
       <Drawer
+        {
+        ...this.props
+        }
         title="记账"
         placement="bottom"
         closable={true}
@@ -334,198 +346,205 @@ class AddTransactionDrawer extends Component {
         className="page-drawer"
         bodyStyle={{ display: 'flex', justifyContent: 'center' }}
         forceRender
-        {
-        ...this.props
-        }
-      >
-        <Form className="page-form" size="large" ref={this.formRef} onFinish={this.handleSubmit} validateMessages={validateMessages}>
-          <div style={{ marginBottom: '1rem' }}>
-            <Space wrap>
-              {
-                this.state.templates.map(t => (
-                  <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
-                    <Tag size="middle" color="#1DA57A" closable onClose={(e) => { this.handleDeleteTransactionTemplate(e, t.id) }}>{t.templateName || t.payee || t.id}</Tag>
-                  </a>
-                ))
-              }
-            </Space>
-          </div>
-          <Form.Item name="date" initialValue={dayjs().format('YYYY-MM-DD')} rules={[{ required: true }]}>
-            <Input type="date" placeholder="交易时间" />
-          </Form.Item>
-          <Form.Item name="payee">
-            <AutoComplete
-              onSearch={this.handleSearchPayee}
-              placeholder="收款人/商户/收入来源渠道"
-            >
-              {this.state.autoCompletePayees.map((payee) => (
-                <AutoComplete.Option key={payee} value={payee}>
-                  {payee}
-                </AutoComplete.Option>
-              ))}
-            </AutoComplete>
-          </Form.Item>
-          <Form.Item
-            name="desc" rules={[{ required: true, message: '详细描述' }]}
-            style={{ flex: 1 }}
-          >
-            <Input
-              placeholder="详细描述，记录细节"
-            />
-          </Form.Item>
-          <div style={{ display: 'flex' }}>
-            <TagsOutlined style={{ color: this.state.showTag ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowTagInput} />
-            <HourglassOutlined style={{ color: this.state.isDivide ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowDivideInput} />
-          </div>
-          {
-            this.state.showTag &&
-            <Fragment>
-              <Divider plain>标签</Divider>
-              <Form.Item name="tags" rules={[{ required: true }]}>
-                <Select mode="tags" style={{ width: '100%' }} placeholder="标签（不支持中文），旅行/计划/学习">
-                  {
-                    this.state.tags.map(tag => <Select.Option key={tag} value={tag}>{tag}</Select.Option>)
-                  }
-                </Select>
-              </Form.Item>
-            </Fragment>
+        onClose={() => {
+          if (this.props.onClose) {
+            this.props.onClose()
           }
-          {
-            this.state.isDivide &&
-            <Fragment>
-              <Divider plain>预支分期</Divider>
-              <div style={{ display: 'flex' }}>
-                <Form.Item name="divideCount" rules={[{ required: true, message: "分期数" }]} style={{ flex: '2', marginRight: '12px' }}>
-                  <Input type="number" step="1" addonAfter="期" />
-                </Form.Item>
-                <Form.Item name="divideCycle" initialValue={"month"} style={{ flex: '1' }}>
-                  <Select style={{ width: '100%' }}>
-                    <Select.Option value="day">间隔一天</Select.Option>
-                    <Select.Option value="week">间隔一周</Select.Option>
-                    <Select.Option value="month">间隔一月</Select.Option>
+          if (this.formRef.current) {
+            this.formRef.current.resetFields()
+          }
+        }}
+      >
+        <Form className="page-form" size="large" loading={this.props.loading} ref={this.formRef} onFinish={this.handleSubmit} validateMessages={validateMessages}>
+          <Spin spinning={this.props.loading}>
+            <div style={{ marginBottom: '1rem' }}>
+              <Space wrap>
+                {
+                  this.state.templates.map(t => (
+                    <a key={t.id} onClick={() => { this.handleSetTemplate(t) }}>
+                      <Tag size="middle" color="#1DA57A" closable onClose={(e) => { this.handleDeleteTransactionTemplate(e, t.id) }}>{t.templateName || t.payee || t.id}</Tag>
+                    </a>
+                  ))
+                }
+              </Space>
+            </div>
+            <Form.Item name="date" initialValue={dayjs().format('YYYY-MM-DD')} rules={[{ required: true }]}>
+              <Input type="date" placeholder="交易时间" />
+            </Form.Item>
+            <Form.Item name="payee">
+              <AutoComplete
+                onSearch={this.handleSearchPayee}
+                placeholder="收款人/商户/收入来源渠道"
+              >
+                {this.state.autoCompletePayees.map((payee) => (
+                  <AutoComplete.Option key={payee} value={payee}>
+                    {payee}
+                  </AutoComplete.Option>
+                ))}
+              </AutoComplete>
+            </Form.Item>
+            <Form.Item
+              name="desc" rules={[{ required: true, message: '详细描述' }]}
+              style={{ flex: 1 }}
+            >
+              <Input
+                placeholder="详细描述，记录细节"
+              />
+            </Form.Item>
+            <div style={{ display: 'flex' }}>
+              <TagsOutlined style={{ color: this.state.showTag ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowTagInput} />
+              <HourglassOutlined style={{ color: this.state.isDivide ? '#1DA57A' : 'gray', width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={this.handleToggleShowDivideInput} />
+            </div>
+            {
+              this.state.showTag &&
+              <Fragment>
+                <Divider plain>标签</Divider>
+                <Form.Item name="tags" rules={[{ required: true }]}>
+                  <Select mode="tags" style={{ width: '100%' }} placeholder="标签（不支持中文），旅行/计划/学习">
+                    {
+                      this.state.tags.map(tag => <Select.Option key={tag} value={tag}>{tag}</Select.Option>)
+                    }
                   </Select>
                 </Form.Item>
-              </div>
-            </Fragment>
-          }
-          <Divider plain>账户明细</Divider>
-          <Form.Item>
-            <FormList form={this.formRef} name="entries">
-              {(fields, { add, remove }) => {
-                return (
-                  <div>
-                    {fields.map(field => {
-                      let accountCommodity = null
-                      let selectAccount = this.formRef.current.getFieldsValue().entries[field.name];
-                      if (selectAccount) {
-                        accountCommodity = this.getAccountCommodity(selectAccount.account)
-                      }
-                      const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
-                      const balanceAmount = this.computeBalanceAmount(formEntriesValues, this.props.commodity.currency)
-                      return (
-                        <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
-                          <Form.Item
-                            name={[field.name, 'account']}
-                            fieldKey={[field.fieldKey, 'account']}
-                            rules={[{ required: true, message: '必输项' }]}
-                          >
-                            <Select
-                              showSearch
-                              placeholder="选择账户"
-                              optionFilterProp="children"
-                              onChange={(acc) => { this.handleChangeAccount(acc, field.name) }}
-                              style={{ marginRight: '10px' }}
-                            >
-                              {
-                                this.state.accounts.map(account => <Option value={account.account}>
-                                  <AccountIcon style={{ width: '22px', height: '22px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
-                                  {account.account}
-                                </Option>)
-                              }
-                            </Select>
-                          </Form.Item>
-                          {
-                            this.needFillAccountCommodityRate(selectAccount) &&
-                            <Fragment>
-                              <Form.Item
-                                hidden
-                                name={[field.name, 'priceCurrency']}
-                                fieldKey={[field.fieldKey, 'priceCurrency']}
-                              >
-                                <Input />
-                              </Form.Item>
-                              <Form.Item
-                                name={[field.name, 'price']}
-                                fieldKey={[field.fieldKey, 'price']}
-                              >
-                                <Input type="number" step="0.01" addonBefore={`1 ${accountCommodity}≈`} addonAfter={this.props.commodity.currency} placeholder={'汇率/净值（选填）'} onChange={this.handleChangeAmount} />
-                              </Form.Item>
-                            </Fragment>
-                          }
-                          <Form.Item
-                            hidden
-                            name={[field.name, 'currency']}
-                            fieldKey={[field.fieldKey, 'currency']}
-                          >
-                            <Input />
-                          </Form.Item>
-                          <div style={{ display: 'flex' }}>
+              </Fragment>
+            }
+            {
+              this.state.isDivide &&
+              <Fragment>
+                <Divider plain>预支分期</Divider>
+                <div style={{ display: 'flex' }}>
+                  <Form.Item name="divideCount" rules={[{ required: true, message: "分期数" }]} style={{ flex: '2', marginRight: '12px' }}>
+                    <Input type="number" step="1" addonAfter="期" />
+                  </Form.Item>
+                  <Form.Item name="divideCycle" initialValue={"month"} style={{ flex: '1' }}>
+                    <Select style={{ width: '100%' }}>
+                      <Select.Option value="day">间隔一天</Select.Option>
+                      <Select.Option value="week">间隔一周</Select.Option>
+                      <Select.Option value="month">间隔一月</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </div>
+              </Fragment>
+            }
+            <Divider plain>账户明细</Divider>
+            <Form.Item>
+              <FormList form={this.formRef} name="entries">
+                {(fields, { add, remove }) => {
+                  return (
+                    <div>
+                      {fields.map(field => {
+                        let accountCommodity = null
+                        let selectAccount = this.formRef.current.getFieldsValue().entries[field.name];
+                        if (selectAccount) {
+                          accountCommodity = this.getAccountCommodity(selectAccount.account)
+                        }
+                        const formEntriesValues = this.formRef.current.getFieldsValue(['entries'])
+                        const balanceAmount = this.computeBalanceAmount(formEntriesValues, this.props.commodity.currency)
+                        return (
+                          <div key={field.name} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
                             <Form.Item
-                              name={[field.name, 'number']}
-                              fieldKey={[field.fieldKey, 'number']}
-                              style={{ flex: 1 }}
+                              name={[field.name, 'account']}
+                              fieldKey={[field.fieldKey, 'account']}
+                              rules={[{ required: true, message: '必输项' }]}
                             >
-                              <Input
-                                type="number"
-                                step="0.01"
-                                addonBefore={
-                                  selectAccount ? <AccountCurrencySelect
-                                    defaultValue={selectAccount.currency}
-                                    currencies={selectAccount.currencies}
-                                    ledgerCurrency={this.props.commodity.currency}
-                                    onChange={(selectedAccountCurrency) => {
-                                      selectAccount.currency = selectedAccountCurrency
-                                      this.handleChangeAccountCurrency(selectAccount, selectedAccountCurrency, field.name)
-                                    }}
-                                  /> : null
+                              <Select
+                                showSearch
+                                placeholder="选择账户"
+                                optionFilterProp="children"
+                                onChange={(acc) => { this.handleChangeAccount(acc, field.name) }}
+                                style={{ marginRight: '10px' }}
+                              >
+                                {
+                                  this.state.accounts.map(account => <Option value={account.account}>
+                                    <AccountIcon style={{ width: '22px', height: '22px', marginRight: '6px' }} iconType={getAccountIcon(account.account)} />
+                                    {account.account}
+                                  </Option>)
                                 }
-                                placeholder={balanceAmount ? `${balanceAmount}(按Enter键可快速保存)` : `${this.state.isDivide ? '预支分期总' : ''}金额`}
-                                onChange={this.handleChangeAmount}
-                                style={{ flex: 1 }}
-                              />
+                              </Select>
                             </Form.Item>
-                            <CloseCircleOutlined style={{ width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={() => { remove(field.name); }} />
+                            {
+                              this.needFillAccountCommodityRate(selectAccount) &&
+                              <Fragment>
+                                <Form.Item
+                                  hidden
+                                  name={[field.name, 'priceCurrency']}
+                                  fieldKey={[field.fieldKey, 'priceCurrency']}
+                                >
+                                  <Input />
+                                </Form.Item>
+                                <Form.Item
+                                  name={[field.name, 'price']}
+                                  fieldKey={[field.fieldKey, 'price']}
+                                >
+                                  <Input type="number" step="0.01" addonBefore={`1 ${accountCommodity}≈`} addonAfter={this.props.commodity.currency} placeholder={'汇率/净值（选填）'} onChange={this.handleChangeAmount} />
+                                </Form.Item>
+                              </Fragment>
+                            }
+                            <Form.Item
+                              hidden
+                              name={[field.name, 'currency']}
+                              fieldKey={[field.fieldKey, 'currency']}
+                            >
+                              <Input />
+                            </Form.Item>
+                            <div style={{ display: 'flex' }}>
+                              <Form.Item
+                                name={[field.name, 'number']}
+                                fieldKey={[field.fieldKey, 'number']}
+                                style={{ flex: 1 }}
+                              >
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  addonBefore={
+                                    selectAccount ? <AccountCurrencySelect
+                                      defaultValue={selectAccount.currency}
+                                      currencies={selectAccount.currencies}
+                                      ledgerCurrency={this.props.commodity.currency}
+                                      onChange={(selectedAccountCurrency) => {
+                                        selectAccount.currency = selectedAccountCurrency
+                                        this.handleChangeAccountCurrency(selectAccount, selectedAccountCurrency, field.name)
+                                      }}
+                                    /> : null
+                                  }
+                                  placeholder={balanceAmount ? `${balanceAmount}(按Enter键可快速保存)` : `${this.state.isDivide ? '预支分期总' : ''}金额`}
+                                  onChange={this.handleChangeAmount}
+                                  style={{ flex: 1 }}
+                                />
+                              </Form.Item>
+                              <CloseCircleOutlined style={{ width: '40px', lineHeight: '40px', fontSize: '20px' }} onClick={() => { remove(field.name); }} />
+                            </div>
+                            <Divider />
                           </div>
-                          <Divider />
-                        </div>
-                      )
-                    })}
-                    <Form.Item>
-                      <Button
-                        type="dashed"
-                        onClick={() => {
-                          add();
-                        }}
-                        block
-                      >
-                        <PlusOutlined /> 添加账目
-                      </Button>
-                    </Form.Item>
-                  </div>
-                );
-              }}
-            </FormList>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={this.state.loading} className="submit-button">
-              保存
-            </Button>
-            &nbsp;&nbsp;
-            <Button htmlType="button" disabled={this.state.loading} loading={this.state.templateLoading} onClick={this.handleSaveTransactionTemplate} block>
-              保存为模版
-            </Button>
-          </Form.Item>
-          <Form.Item></Form.Item>
+                        )
+                      })}
+                      <Form.Item>
+                        <Button
+                          type="dashed"
+                          onClick={() => {
+                            add();
+                          }}
+                          block
+                        >
+                          <PlusOutlined /> 添加账目
+                        </Button>
+                      </Form.Item>
+                    </div>
+                  );
+                }}
+              </FormList>
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={this.state.loading} className="submit-button">
+                保存
+              </Button>
+              &nbsp;&nbsp;
+              <Button htmlType="button" disabled={this.state.loading} loading={this.state.templateLoading} onClick={this.handleSaveTransactionTemplate} block>
+                保存为模版
+              </Button>
+            </Form.Item>
+            <Form.Item></Form.Item>
+          </Spin>
         </Form>
       </Drawer>
     )

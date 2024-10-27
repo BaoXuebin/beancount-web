@@ -67,6 +67,8 @@ export const fetch = (url, { method, headers, body, hintError } = {}) => {
             redirectLedgerPage()
           } else if (code === 401) {
             redirectLedgerPage()
+          } else if (code === 500) {
+            message.error(`请求失败: [${res.message}]`);
           } else {
             message.error('请求失败，请刷新页面重试');
           }
