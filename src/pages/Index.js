@@ -1,4 +1,4 @@
-import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined, FallOutlined, RiseOutlined, SettingOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
+import { AccountBookOutlined, CloudUploadOutlined, EyeInvisibleOutlined, EyeOutlined, FormOutlined, FallOutlined, RiseOutlined, SettingOutlined, EditOutlined, CodeOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { Button, Col, Dropdown, Empty, List, message, Modal, Row, Spin, Tabs, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React, { Component } from 'react';
@@ -14,10 +14,11 @@ import { AccountTypeDict, fetch, formatCurrency, getAccountIcon, getAccountName 
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
 import './styles/Index.css';
+import EditTransactionRawTextDrawer from '../components/EditTransactionRawTextDrawer';
 
 const TabPane = Tabs.TabPane
 
-const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer, onOpenTagDrawer, onOpenEditTransactionDrawer, OnDeleteTransaction }) => (
+const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer, onOpenTagDrawer, onOpenEditTransactionDrawer, onOpenEditTransactionRawTextDrawer, OnDeleteTransaction }) => (
   <div style={{ minHeight: '400px' }}>
     {
       (!loading && transactionGroups.length === 0) ? < Empty description={`无${AccountTypeDict[type]}内容`} /> :
@@ -49,6 +50,18 @@ const TransactionList = ({ loading, transactionGroups, type, onOpenAccountDrawer
                                 </a>
                               ),
                               key: 'edit',
+                            },
+                            {
+                              label: (
+                                <a onClick={() => {
+                                  if (onOpenEditTransactionRawTextDrawer && typeof onOpenEditTransactionRawTextDrawer === 'function') {
+                                    onOpenEditTransactionRawTextDrawer(item)
+                                  }
+                                }}>
+                                  <CodeOutlined />&nbsp;源文件
+                                </a>
+                              ),
+                              key: 'edit-raw',
                             },
                             {
                               type: 'divider',
@@ -125,6 +138,7 @@ class Index extends Component {
     editTransactionDrawerVisible: false,
     editTransactionDetail: {},
     getEditedTransactionDetailLoading: false,
+    editTransactionRawTextDrawerVisible: false,
   }
 
   componentDidMount() {
@@ -250,6 +264,14 @@ class Index extends Component {
     this.setState({ calendarDrawerVisible: false })
   }
 
+  handleOpenEditTransactionRawTextDrawer = (transaction) => {
+    this.setState({ editTransactionRawTextDrawerVisible: true, editTransactionDetail: transaction })
+  }
+
+  handleCloseEditTransactionRawTextDrawer = () => {
+    this.setState({ editTransactionRawTextDrawerVisible: false, editTransactionDetail: {} })
+  }
+
   handleOpenEditTransactionDrawer = (item) => {
     this.setState({ editTransactionDrawerVisible: true, getEditedTransactionDetailLoading: true })
     fetch(`/api/auth/transaction/detail?id=${item.id}`)
@@ -292,7 +314,8 @@ class Index extends Component {
     }
 
     const { loading, listLoading, transactionDateGroup, addTransactionDrawerVisible, hideMoney, accountTransactionDrawerVisible,
-      tagTransactionDrawerVisible, editTransactionDrawerVisible, editTransactionDetail, getEditedTransactionDetailLoading } = this.state
+      tagTransactionDrawerVisible, editTransactionDrawerVisible, editTransactionDetail, getEditedTransactionDetailLoading,
+      editTransactionRawTextDrawerVisible } = this.state
     const transactionGroups = Object.values(transactionDateGroup);
     return (
       <div className="index-page page">
@@ -330,6 +353,9 @@ class Index extends Component {
               transactionGroups={transactionGroups}
               onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
               onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
+              onOpenEditTransactionDrawer={this.handleOpenEditTransactionDrawer}
+              onOpenEditTransactionRawTextDrawer={this.handleOpenEditTransactionRawTextDrawer}
+              OnDeleteTransaction={this.handleDeleteTransaction}
             />
           </TabPane>
           <TabPane tab="支出明细" key="Expenses">
@@ -340,6 +366,7 @@ class Index extends Component {
               onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
               onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
               onOpenEditTransactionDrawer={this.handleOpenEditTransactionDrawer}
+              onOpenEditTransactionRawTextDrawer={this.handleOpenEditTransactionRawTextDrawer}
               OnDeleteTransaction={this.handleDeleteTransaction}
             />
           </TabPane>
@@ -350,6 +377,9 @@ class Index extends Component {
               transactionGroups={transactionGroups}
               onOpenAccountDrawer={this.handleOpenAccountTransactionDrawer}
               onOpenTagDrawer={this.handleOpenTagTransactionDrawer}
+              onOpenEditTransactionDrawer={this.handleOpenEditTransactionDrawer}
+              onOpenEditTransactionRawTextDrawer={this.handleOpenEditTransactionRawTextDrawer}
+              OnDeleteTransaction={this.handleDeleteTransaction}
             />
           </TabPane>
         </Tabs>
@@ -362,6 +392,12 @@ class Index extends Component {
             this.handleCloseAddTransactionDrawer()
             this.handleCloseEditTransactionDrawer()
           }}
+          onSubmit={this.handleAddTransaction}
+        />
+        <EditTransactionRawTextDrawer
+          transaction={editTransactionDetail}
+          visible={editTransactionRawTextDrawerVisible}
+          onClose={this.handleCloseEditTransactionRawTextDrawer}
           onSubmit={this.handleAddTransaction}
         />
         {

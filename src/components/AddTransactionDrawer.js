@@ -71,7 +71,6 @@ class AddTransactionDrawer extends Component {
       this.formRef.current.setFieldsValue({ entries: this.formatEnties([...nextProps.defaultAccounts]) })
     }
     if (this.formRef.current && nextProps.defaultTransaction && nextProps.defaultTransaction.id) {
-      console.log(nextProps.defaultTransaction)
       this.formRef.current.setFieldsValue(nextProps.defaultTransaction)
     }
   }
