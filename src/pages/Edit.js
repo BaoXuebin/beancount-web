@@ -1,11 +1,10 @@
 import { SaveOutlined } from '@ant-design/icons';
 import { Button, message, Select } from 'antd';
-import { ContentState, Editor, EditorState } from 'draft-js';
-import 'draft-js/dist/Draft.css';
 import React, { Component } from 'react';
 import { fetch } from '../config/Util';
 import ThemeContext from '../context/ThemeContext';
 import Page from './base/Page';
+import BeancountEditor from '../components/BeancountEditor';
 
 
 class Edit extends Component {
@@ -14,11 +13,11 @@ class Edit extends Component {
 
   state = {
     loading: false,
+    lang: 'beancount',
     path: null,
     files: [],
     rawContent: '',
-    content: '',
-    editorState: EditorState.createEmpty()
+    content: ''
   }
 
   componentDidMount() {
@@ -34,12 +33,15 @@ class Edit extends Component {
       .finally(() => { this.setState({ loading: false }) })
   }
 
-  handldEditContent = editorState => {
-    this.setState({ editorState, content: editorState.getCurrentContent().getPlainText() })
+  handldEditContent = content => {
+    this.setState({ content })
   }
 
   handleChangeFile = (path) => {
-    this.setState({ path }, () => {
+    let lang = this.state.lang
+    const s = path.split('.')
+    lang = s[s.length - 1]
+    this.setState({ path, lang }, () => {
       this.fetchFileContent(path);
     })
   }
@@ -48,7 +50,7 @@ class Edit extends Component {
     this.setState({ loading: true })
     fetch(`/api/auth/file/content?path=${this.state.path}`)
       .then(rawContent => {
-        this.setState({ rawContent, content: rawContent, editorState: EditorState.createWithContent(ContentState.createFromText(rawContent)) })
+        this.setState({ rawContent, content: rawContent })
       })
       .finally(() => { this.setState({ loading: false }) })
   }
@@ -87,11 +89,7 @@ class Edit extends Component {
           >保存</Button>
         </div>
         <div style={{ marginTop: '1rem' }}>
-          <Editor
-            placeholder={this.state.path ? "该文件内容为空" : "未选择源文件"}
-            editorState={this.state.editorState}
-            onChange={this.handldEditContent}
-          />
+          <BeancountEditor lang={this.state.lang} value={this.state.content} onContentChange={this.handldEditContent} />
         </div>
       </div>
     );
