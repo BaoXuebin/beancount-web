@@ -563,6 +563,7 @@ class Account extends Component {
           </Drawer>
         </div>
         <AccountTransactionDrawer
+          commodity={this.props.commodity}
           account={this.state.editAccount.account}
           visible={transactionDrawerVisible}
           onClose={this.handleCloseTransactionDrawer}
@@ -586,6 +587,7 @@ class Account extends Component {
           defaultAccounts={
             this.state.addTransactionAccount ? [this.state.addTransactionAccount] : null
           }
+          loading={false}
           visible={this.state.addTransactionDrawerVisible}
           onClose={this.handleCloseAddTransactionDrawer}
           onSubmit={this.handleAfterAddTransaction}

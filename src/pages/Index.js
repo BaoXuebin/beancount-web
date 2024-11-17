@@ -208,7 +208,6 @@ class Index extends Component {
     } else if (selectedMonth.length === 4) {
       queryRange = 'year'
     }
-    console.log(queryRange)
     this.setState({ selectedMonth, queryRange }, () => {
       this.queryMonthStats();
       this.queryTransactionList();
